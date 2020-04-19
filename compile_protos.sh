@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Elixir
+rm -rf trader/lib/proto/*.pb.ex
 protoc -I proto --elixir_out=trader/lib/proto/ proto/*.proto
 
 # C++
