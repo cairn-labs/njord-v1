@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message L2OrderBookEntry {
+  string price = 1;
+  string size = 2;
+  int32 num_orders = 3;
+}
+
+
+message L2OrderBook {
+  repeated L2OrderBookEntry bids = 1;
+  repeated L2OrderBookEntry asks = 2;
+}

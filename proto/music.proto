@@ -1,0 +1,14 @@
+syntax = "proto3";
+import "l2_order_book.proto";
+
+enum DataPointType {
+  UNKNOWN_DATA_POINT_TYPE = 0;
+  L2_ORDER_BOOK = 1;
+}
+
+message DataPoint {
+  uint64 event_timestamp = 1;
+  DataPointType data_point_type = 2;
+
+  L2OrderBook l2_order_book = 3;
+}
