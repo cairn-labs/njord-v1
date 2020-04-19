@@ -8,12 +8,9 @@ defmodule Trader.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      # Start the Ecto repository
       Trader.Repo,
-      # Start the endpoint when the application starts
-      TraderWeb.Endpoint
-      # Starts a worker by calling: Trader.Worker.start_link(arg)
-      # {Trader.Worker, arg},
+      TraderWeb.Endpoint,
+      Trader.Coinbase.L2DataCollector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
