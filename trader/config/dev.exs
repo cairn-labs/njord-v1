@@ -42,6 +42,7 @@ config :trader, TraderWeb.Endpoint,
   ]
 
 config :trader, Trader.Coinbase.L2DataCollector,
+  enable: false,
   url: "https://api.pro.coinbase.com",
   milliseconds_per_tick: 5_000
 

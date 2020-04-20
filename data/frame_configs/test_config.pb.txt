@@ -1,0 +1,6 @@
+window_width_ms: 600000  # 10 minutes
+bucket_width_ms: 20000   # 30 buckets
+vectorization_configs {
+  data_point_type: L2_ORDER_BOOK
+  bucketing_strategy: EARLIEST
+}

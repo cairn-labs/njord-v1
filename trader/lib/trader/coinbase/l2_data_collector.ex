@@ -17,18 +17,22 @@ defmodule Trader.Coinbase.L2DataCollector do
 
   @impl true
   def init(_state) do
-    Logger.debug("Starting Coinbase L2DataCollector GenServer...")
-    queue_next_tick(self())
+    if Keyword.get(Application.get_env(:trader, __MODULE__), :enable, true) do
+      Logger.debug("Starting Coinbase L2DataCollector GenServer...")
+      queue_next_tick(self())
+    end
+
     {:ok, %{}}
   end
 
+  @impl true
   def handle_info(:tick, state) do
     with {:ok, response} <- request_order_book("BTC-USD"),
          {:ok, proto} <- make_data_point_proto(response) do
       Db.DataPoints.insert_datapoint(proto)
     else
       {:error, m} ->
-        Logger.error("Error retrieving L2 Data: #{inspect m}")
+        Logger.error("Error retrieving L2 Data: #{inspect(m)}")
     end
 
     queue_next_tick(self())
@@ -49,20 +53,20 @@ defmodule Trader.Coinbase.L2DataCollector do
 
     dummy_response = %{
       "sequence" => "3",
-      "bids" => [[ "295.96", "4.39088265", 2 ],
-                 [ "295.95", "14.39088265", 5 ]],
-      "asks" => [[ "295.97", "3.19088265", 1 ],
-                 [ "295.99", "17.29088265", 6 ]],
+      "bids" => [["295.96", "4.39088265", 2], ["295.95", "14.39088265", 5]],
+      "asks" => [["295.97", "3.19088265", 1], ["295.99", "17.29088265", 6]]
     }
+
     {:ok, dummy_response}
   end
 
   defp make_data_point_proto(response) do
-    proto = DataPoint.new(
-      event_timestamp: DateTime.utc_now() |> DateTime.to_unix(:microsecond),
-      data_point_type: :L2_ORDER_BOOK,
-      l2_order_book: order_book_to_proto(response)
-    )
+    proto =
+      DataPoint.new(
+        event_timestamp: DateTime.utc_now() |> DateTime.to_unix(:microsecond),
+        data_point_type: :L2_ORDER_BOOK,
+        l2_order_book: order_book_to_proto(response)
+      )
 
     {:ok, proto}
   end
