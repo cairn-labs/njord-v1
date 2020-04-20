@@ -1,0 +1,9 @@
+syntax = "proto3";
+import "data_point.proto";
+import "bucketing_strategy.proto";
+
+
+message VectorizationConfig {
+  DataPointType data_point_type = 1;
+  BucketingStrategy bucketing_strategy = 2;
+}

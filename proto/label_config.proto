@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+message LabelConfig {
+  int32 todo = 1;
+}

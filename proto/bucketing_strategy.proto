@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+enum BucketingStrategy {
+  UNKNOWN_BUCKETING_STRATEGY = 0;
+  EARLIEST = 1;
+  LATEST = 2;
+}
