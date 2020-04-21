@@ -9,6 +9,7 @@ defmodule TraderWeb.TrainingDataController do
       |> File.read!()
       |> FrameConfig.decode()
 
-    ApiUtil.send_success(conn, %{})
+    {:ok, results} = Trader.Frames.FrameGeneration.generate_frames(frame_config, 3)
+    ApiUtil.send_success(conn, %{results: results})
   end
 end

@@ -1,4 +1,5 @@
 import requests
+import json
 from google.protobuf.text_format import Parse
 from analyst.proto.frame_config_pb2 import FrameConfig
 import sys
@@ -10,4 +11,6 @@ with open(sys.argv[1]) as handle:
 frame_config = FrameConfig()
 Parse(frame_config_text, frame_config)
 file_upload = {'frame_config': ('frame_config.pb', frame_config.SerializeToString())}
-requests.post(URL, files=file_upload)
+response = requests.post(URL, files=file_upload)
+print("Response:")
+print(json.dumps(response.json(), indent=2))

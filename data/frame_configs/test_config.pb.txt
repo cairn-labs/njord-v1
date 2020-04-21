@@ -1,6 +1,9 @@
-window_width_ms: 600000  # 10 minutes
-bucket_width_ms: 20000   # 30 buckets
+frame_width_ms: 60000  # 1 minute
 vectorization_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
+  bucket_width_ms: 5000   # 5 seconds
+  interpolate_strategy {
+    max_interpolation_time_diff_ms: 20000
+  }
 }

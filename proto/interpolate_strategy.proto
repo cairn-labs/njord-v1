@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message InterpolateStrategy {
+  // Maximum amount of time in milliseconds since an event happened
+  // that its data can still be used. Set to 0 for infinite.
+  uint64 max_interpolation_time_diff_ms = 2;
+}

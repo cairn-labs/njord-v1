@@ -3,8 +3,7 @@ import "vectorization_config.proto";
 import "label_config.proto";
 
 message FrameConfig {
-  uint64 window_width_ms = 1;
-  uint64 bucket_width_ms = 2;
+  uint64 frame_width_ms = 1;
   repeated VectorizationConfig vectorization_configs = 3;
   repeated LabelConfig label_configs = 4;
 }

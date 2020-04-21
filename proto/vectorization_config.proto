@@ -1,9 +1,12 @@
 syntax = "proto3";
 import "data_point.proto";
 import "bucketing_strategy.proto";
+import "interpolate_strategy.proto";
 
 
 message VectorizationConfig {
   DataPointType data_point_type = 1;
-  BucketingStrategy bucketing_strategy = 2;
+  uint64 bucket_width_ms = 2;
+  BucketingStrategy bucketing_strategy = 3;
+  InterpolateStrategy interpolate_strategy = 4;
 }
