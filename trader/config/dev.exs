@@ -41,9 +41,14 @@ config :trader, TraderWeb.Endpoint,
     ]
   ]
 
+config :trader, Trader.Coinbase.CoinbaseApi,
+  api_key: System.get_env("COINBASE_API_KEY"),
+  api_passphrase: System.get_env("COINBASE_API_PASSPHRASE"),
+  api_secret: System.get_env("COINBASE_API_SECRET"),
+  rest_api_url: "https://api.pro.coinbase.com"
+
 config :trader, Trader.Coinbase.L2DataCollector,
-  enable: false,
-  url: "https://api.pro.coinbase.com",
+  enable: true,
   milliseconds_per_tick: 5_000
 
 # Do not include metadata nor timestamps in development logs

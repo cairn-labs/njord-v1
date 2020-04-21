@@ -2,6 +2,7 @@ defmodule Trader.Coinbase.L2DataCollector do
   require Logger
   use GenServer
   alias Trader.Db
+  alias Trader.Coinbase.CoinbaseApi, as: Api
 
   ##########
   # Client #
@@ -45,19 +46,12 @@ defmodule Trader.Coinbase.L2DataCollector do
   end
 
   defp request_order_book(product_id) do
-    url =
-      Application.get_env(:trader, __MODULE__)[:url]
-      |> URI.parse()
-      |> URI.merge("/api/#{product_id}/book?level=2")
-      |> to_string
-
-    dummy_response = %{
-      "sequence" => "3",
-      "bids" => [["295.96", "4.39088265", 2], ["295.95", "14.39088265", 5]],
-      "asks" => [["295.97", "3.19088265", 1], ["295.99", "17.29088265", 6]]
-    }
-
-    {:ok, dummy_response}
+    with {:ok, %{body: body}} <- Api.call(:GET, "/products/#{product_id}/book?level=2"),
+         {:ok, data} <- Jason.decode(body) do
+      {:ok, data}
+    else
+      _ -> :error
+    end
   end
 
   defp make_data_point_proto(response) do
