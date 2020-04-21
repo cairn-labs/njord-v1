@@ -3,8 +3,17 @@ defmodule Trader.Frames.FrameGeneration do
   require Logger
 
   def generate_frames(%FrameConfig{} = frame_config, num_frames) do
-    windows = available_windows(frame_config)
-    {:ok, windows}
+    case available_windows(frame_config) do
+      [] ->
+        {:error, :no_data_available}
+
+      windows when length(windows) < num_frames ->
+        Logger.warn("Attempting to collect more frames than available windows.")
+        extract_frames(windows)
+
+      windows ->
+        extract_frames(Enum.take_random(windows, num_frames))
+    end
   end
 
   defp available_windows(
@@ -20,28 +29,24 @@ defmodule Trader.Frames.FrameGeneration do
       |> Enum.map(fn %VectorizationConfig{data_point_type: type} -> type end)
       |> Enum.into(MapSet.new())
 
-    windows =
-      vectorization_configs
-      |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms) end)
-      |> Enum.group_by(fn {ts, type} -> ts end)
-      |> Stream.map(fn {k, values} ->
-        {k,
-         Enum.flat_map(values, fn
-           {ts, type} ->
-             if MapSet.member?(required_types, type) do
-               [type]
-             else
-               []
-             end
-         end)}
-      end)
-      |> Stream.filter(fn {ts, types} ->
-        MapSet.size(Enum.into(types, MapSet.new())) == MapSet.size(required_types)
-      end)
-      |> Enum.map(fn {ts, _} -> ts end)
-
-    Logger.info(inspect(windows))
-    windows
+    vectorization_configs
+    |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms) end)
+    |> Enum.group_by(fn {ts, type} -> ts end)
+    |> Stream.map(fn {k, values} ->
+      {k,
+       Enum.flat_map(values, fn
+         {ts, type} ->
+           if MapSet.member?(required_types, type) do
+             [type]
+           else
+             []
+           end
+       end)}
+    end)
+    |> Stream.filter(fn {ts, types} ->
+      MapSet.size(Enum.into(types, MapSet.new())) == MapSet.size(required_types)
+    end)
+    |> Enum.map(fn {ts, _} -> ts end)
   end
 
   defp available_windows_by_type(%VectorizationConfig{interpolate_strategy: nil}, _) do
@@ -77,4 +82,8 @@ defmodule Trader.Frames.FrameGeneration do
        do: false
 
   defp has_interpolation_limit(_), do: true
+
+  def extract_frames(window_starts) do
+    {:ok, window_starts}
+  end
 end

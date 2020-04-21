@@ -22,6 +22,6 @@ defmodule TraderWeb.Router do
   scope "/api", TraderWeb do
     pipe_through(:api)
 
-    post("/get_training_data", TrainingDataController, :get_training_data)
+    post("/get_training_data/:num_frames", TrainingDataController, :get_training_data)
   end
 end
