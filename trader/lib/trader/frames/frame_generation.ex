@@ -19,17 +19,17 @@ defmodule Trader.Frames.FrameGeneration do
   defp available_windows(
          %FrameConfig{
            frame_width_ms: frame_width_ms,
-           vectorization_configs: vectorization_configs,
+           feature_configs: feature_configs,
            label_configs: label_configs
          } = frame_config
        ) do
     required_types =
-      vectorization_configs
+      feature_configs
       |> Enum.filter(&has_interpolation_limit/1)
-      |> Enum.map(fn %VectorizationConfig{data_point_type: type} -> type end)
+      |> Enum.map(fn %FeatureConfig{data_point_type: type} -> type end)
       |> Enum.into(MapSet.new())
 
-    vectorization_configs
+    feature_configs
     |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms) end)
     |> Enum.group_by(fn {ts, type} -> ts end)
     |> Stream.map(fn {k, values} ->
@@ -49,12 +49,12 @@ defmodule Trader.Frames.FrameGeneration do
     |> Enum.map(fn {ts, _} -> ts end)
   end
 
-  defp available_windows_by_type(%VectorizationConfig{interpolate_strategy: nil}, _) do
+  defp available_windows_by_type(%FeatureConfig{interpolate_strategy: nil}, _) do
     []
   end
 
   defp available_windows_by_type(
-         %VectorizationConfig{
+         %FeatureConfig{
            interpolate_strategy: %InterpolateStrategy{max_interpolation_time_diff_ms: 0}
          },
          _
@@ -63,20 +63,33 @@ defmodule Trader.Frames.FrameGeneration do
   end
 
   defp available_windows_by_type(
-         %VectorizationConfig{
+         %FeatureConfig{
            data_point_type: data_point_type,
            interpolate_strategy: %InterpolateStrategy{
              max_interpolation_time_diff_ms: max_time_diff
            }
-         },
+         } = config,
          frame_width_ms
        ) do
-    result = Db.DataPoints.get_available_windows(data_point_type, max_time_diff, frame_width_ms)
-    Logger.debug("Found #{length(result)} windows for type #{Atom.to_string(data_point_type)}")
+    selector = Trader.Selectors.from_feature_config(config)
+
+    result =
+      Db.DataPoints.get_available_windows(
+        data_point_type,
+        max_time_diff,
+        frame_width_ms,
+        selector
+      )
+
+    Logger.debug(
+      "Found #{length(result)} windows for type #{Atom.to_string(data_point_type)} " <>
+        "and selector #{selector}"
+    )
+
     Enum.map(result, fn d -> {d, data_point_type} end)
   end
 
-  defp has_interpolation_limit(%VectorizationConfig{
+  defp has_interpolation_limit(%FeatureConfig{
          interpolate_strategy: %InterpolateStrategy{max_interpolation_time_diff_ms: 0}
        }),
        do: false
@@ -93,13 +106,15 @@ defmodule Trader.Frames.FrameGeneration do
   end
 
   defp extract_frame(window_start, %FrameConfig{
-         vectorization_configs: configs,
+         feature_configs: configs,
          frame_width_ms: frame_width_ms
        }) do
     components =
       for config <- configs do
+        selector = Trader.Selectors.from_feature_config(config)
+
         data_points =
-          Db.DataPoints.get_frame_component(config, window_start, frame_width_ms)
+          Db.DataPoints.get_frame_component(config, window_start, frame_width_ms, selector)
           |> Enum.map(&DataPoint.decode/1)
 
         FrameComponent.new(data_point_type: config.data_point_type, data: data_points)

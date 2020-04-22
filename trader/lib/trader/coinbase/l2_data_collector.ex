@@ -4,6 +4,8 @@ defmodule Trader.Coinbase.L2DataCollector do
   alias Trader.Db
   alias Trader.Coinbase.CoinbaseApi, as: Api
 
+  @all_products ["BTC-USD"]
+
   ##########
   # Client #
   ##########
@@ -28,12 +30,14 @@ defmodule Trader.Coinbase.L2DataCollector do
 
   @impl true
   def handle_info(:tick, state) do
-    with {:ok, response} <- request_order_book("BTC-USD"),
-         {:ok, proto} <- make_data_point_proto(response) do
-      Db.DataPoints.insert_datapoint(proto)
-    else
-      {:error, m} ->
-        Logger.error("Error retrieving L2 Data: #{inspect(m)}")
+    for product <- @all_products do
+      with {:ok, response} <- request_order_book(product),
+           {:ok, proto} <- make_data_point_proto(response, product) do
+        Db.DataPoints.insert_datapoint(proto)
+      else
+        {:error, m} ->
+          Logger.error("Error retrieving L2 Data: #{inspect(m)}")
+      end
     end
 
     queue_next_tick(self())
@@ -54,21 +58,22 @@ defmodule Trader.Coinbase.L2DataCollector do
     end
   end
 
-  defp make_data_point_proto(response) do
+  defp make_data_point_proto(response, product) do
     proto =
       DataPoint.new(
         event_timestamp: DateTime.utc_now() |> DateTime.to_unix(:microsecond),
         data_point_type: :L2_ORDER_BOOK,
-        l2_order_book: order_book_to_proto(response)
+        l2_order_book: order_book_to_proto(response, product)
       )
 
     {:ok, proto}
   end
 
-  defp order_book_to_proto(%{"bids" => bids, "asks" => asks}) do
+  defp order_book_to_proto(%{"bids" => bids, "asks" => asks}, product) do
     L2OrderBook.new(
       bids: Enum.map(bids, &order_book_entry_to_proto/1),
-      asks: Enum.map(asks, &order_book_entry_to_proto/1)
+      asks: Enum.map(asks, &order_book_entry_to_proto/1),
+      product: Trader.CurrencyUtil.currency_pair_from_string(product)
     )
   end
 

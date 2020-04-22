@@ -1,11 +1,6 @@
 syntax = "proto3";
 
-enum LabelType {
-  UNKNOWN_LABEL_TYPE = 0;
-  EXCHANGE_RATE = 1;
-}
-
 message Label {
-  LabelType label_type = 1;
-  float value_float = 2;
+  uint64 event_timestamp = 1;
+  string value_decimal = 2;
 }

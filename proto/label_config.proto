@@ -1,5 +1,15 @@
 syntax = "proto3";
+import "fx_rate_label_config.proto";
+
+
+enum LabelType {
+  UNKNOWN_LABEL_TYPE = 0;
+  FX_RATE = 1;
+}
 
 message LabelConfig {
-  int32 todo = 1;
+  uint64 prediction_delay_ms = 1;
+  LabelType label_type = 2;
+
+  FxRateLabelConfig fx_rate_config = 3;
 }

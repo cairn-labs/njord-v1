@@ -1,9 +1,9 @@
 syntax = "proto3";
-import "vectorization_config.proto";
+import "feature_config.proto";
 import "label_config.proto";
 
 message FrameConfig {
   uint64 frame_width_ms = 1;
-  repeated VectorizationConfig vectorization_configs = 3;
+  repeated FeatureConfig feature_configs = 3;
   repeated LabelConfig label_configs = 4;
 }

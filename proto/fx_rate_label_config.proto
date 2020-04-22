@@ -1,0 +1,6 @@
+syntax = "proto3";
+import "currency_pair.proto";
+
+message FxRateLabelConfig {
+  CurrencyPair product = 1;
+}

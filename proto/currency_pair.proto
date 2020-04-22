@@ -1,0 +1,7 @@
+syntax = "proto3";
+import "currency.proto";
+
+message CurrencyPair {
+  Currency base = 1;
+  Currency counter = 2;
+}

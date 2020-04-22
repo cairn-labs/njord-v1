@@ -1,9 +1,25 @@
-frame_width_ms: 60000  # 1 minute
-vectorization_configs {
+frame_width_ms: 60000  # 2 minute
+feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 5000   # 5 seconds
+  bucket_width_ms: 10000   # 10 seconds
   interpolate_strategy {
     max_interpolation_time_diff_ms: 20000
+  }
+  l2_order_book_config {
+    product {
+      base: BTC
+      counter: USD
+    }
+  }
+}
+label_configs {
+  prediction_delay_ms: 30000  # 30 seconds
+  label_type: FX_RATE
+  fx_rate_config {
+    product {
+      base: BTC
+      counter: USD
+    }
   }
 }

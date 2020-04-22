@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "currency_pair.proto";
 
 message L2OrderBookEntry {
   string price = 1;
@@ -6,8 +7,12 @@ message L2OrderBookEntry {
   int32 num_orders = 3;
 }
 
+message L2OrderBookConfig {
+ CurrencyPair product = 1;
+}
 
 message L2OrderBook {
+  CurrencyPair product = 3;
   repeated L2OrderBookEntry bids = 1;
   repeated L2OrderBookEntry asks = 2;
 }
