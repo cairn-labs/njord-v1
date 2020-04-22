@@ -13,6 +13,6 @@ with open(sys.argv[1]) as handle:
 frame_config = FrameConfig()
 Parse(frame_config_text, frame_config)
 file_upload = {'frame_config': ('frame_config.pb', frame_config.SerializeToString())}
-response = requests.post(URL, files=file_upload)
-print("Response:")
-print(json.dumps(response.json(), indent=2))
+response = requests.post(URL, files=file_upload, allow_redirects=True)
+with open('frames.zip', 'wb') as handle:
+    handle.write(response.content)

@@ -9,9 +9,17 @@ defmodule TraderWeb.TrainingDataController do
       |> File.read!()
       |> FrameConfig.decode()
 
-    {:ok, results} =
+    {:ok, frames} =
       Trader.Frames.FrameGeneration.generate_frames(frame_config, String.to_integer(num_frames))
 
-    ApiUtil.send_success(conn, %{results: results})
+    files =
+      frames
+      |> Stream.with_index()
+      |> Enum.map(fn {f, idx} ->
+        {'component_' ++ to_charlist(idx) ++ '.pb', DataFrame.encode(f)}
+      end)
+
+    {:ok, {'mem', zip_bin}} = :zip.create('mem', files, [:memory])
+    send_download(conn, {:binary, zip_bin}, filename: "frames.zip")
   end
 end

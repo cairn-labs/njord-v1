@@ -1,8 +1,8 @@
 syntax = "proto3";
-import "data_point.proto";
+import "frame_component.proto";
 import "label.proto";
 
 message DataFrame {
-  repeated DataPoint data = 1;
-  repeated Label label = 2;
+  repeated FrameComponent components = 1;
+  repeated Label labels = 2;
 }

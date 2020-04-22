@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+import "data_point.proto";
+
+message FrameComponent {
+  DataPointType data_point_type = 1;
+  repeated DataPoint data = 2;
+}

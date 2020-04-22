@@ -9,10 +9,10 @@ defmodule Trader.Frames.FrameGeneration do
 
       windows when length(windows) < num_frames ->
         Logger.warn("Attempting to collect more frames than available windows.")
-        extract_frames(windows)
+        extract_frames(windows, frame_config)
 
       windows ->
-        extract_frames(Enum.take_random(windows, num_frames))
+        extract_frames(Enum.take_random(windows, num_frames), frame_config)
     end
   end
 
@@ -83,7 +83,28 @@ defmodule Trader.Frames.FrameGeneration do
 
   defp has_interpolation_limit(_), do: true
 
-  def extract_frames(window_starts) do
-    {:ok, window_starts}
+  defp extract_frames(window_starts, %FrameConfig{} = config) do
+    frames =
+      for start <- window_starts do
+        extract_frame(start, config)
+      end
+
+    {:ok, frames}
+  end
+
+  defp extract_frame(window_start, %FrameConfig{
+         vectorization_configs: configs,
+         frame_width_ms: frame_width_ms
+       }) do
+    components =
+      for config <- configs do
+        data_points =
+          Db.DataPoints.get_frame_component(config, window_start, frame_width_ms)
+          |> Enum.map(&DataPoint.decode/1)
+
+        FrameComponent.new(data_point_type: config.data_point_type, data: data_points)
+      end
+
+    DataFrame.new(components: components)
   end
 end
