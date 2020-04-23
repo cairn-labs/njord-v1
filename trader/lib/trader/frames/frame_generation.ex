@@ -1,5 +1,6 @@
 defmodule Trader.Frames.FrameGeneration do
   alias Trader.Db
+  alias Trader.Frames.LabelExtraction
   require Logger
 
   def generate_frames(%FrameConfig{} = frame_config, num_frames) do
@@ -16,13 +17,10 @@ defmodule Trader.Frames.FrameGeneration do
     end
   end
 
-  defp available_windows(
-         %FrameConfig{
-           frame_width_ms: frame_width_ms,
-           feature_configs: feature_configs,
-           label_configs: label_configs
-         } = frame_config
-       ) do
+  defp available_windows(%FrameConfig{
+         frame_width_ms: frame_width_ms,
+         feature_configs: feature_configs
+       }) do
     required_types =
       feature_configs
       |> Enum.filter(&has_interpolation_limit/1)
@@ -31,11 +29,11 @@ defmodule Trader.Frames.FrameGeneration do
 
     feature_configs
     |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms) end)
-    |> Enum.group_by(fn {ts, type} -> ts end)
+    |> Enum.group_by(fn {ts, _type} -> ts end)
     |> Stream.map(fn {k, values} ->
       {k,
        Enum.flat_map(values, fn
-         {ts, type} ->
+         {_ts, type} ->
            if MapSet.member?(required_types, type) do
              [type]
            else
@@ -43,7 +41,7 @@ defmodule Trader.Frames.FrameGeneration do
            end
        end)}
     end)
-    |> Stream.filter(fn {ts, types} ->
+    |> Stream.filter(fn {_ts, types} ->
       MapSet.size(Enum.into(types, MapSet.new())) == MapSet.size(required_types)
     end)
     |> Enum.map(fn {ts, _} -> ts end)
@@ -106,20 +104,35 @@ defmodule Trader.Frames.FrameGeneration do
   end
 
   defp extract_frame(window_start, %FrameConfig{
-         feature_configs: configs,
-         frame_width_ms: frame_width_ms
+         feature_configs: feature_configs,
+         frame_width_ms: frame_width_ms,
+         label_config:
+           %LabelConfig{
+             prediction_delay_ms: prediction_delay_ms
+           } = label_config
        }) do
     components =
-      for config <- configs do
-        selector = Trader.Selectors.from_feature_config(config)
+      for feature_config <- feature_configs do
+        selector = Trader.Selectors.from_feature_config(feature_config)
 
         data_points =
-          Db.DataPoints.get_frame_component(config, window_start, frame_width_ms, selector)
+          Db.DataPoints.get_frame_component(
+            feature_config,
+            window_start,
+            frame_width_ms,
+            selector
+          )
           |> Enum.map(&DataPoint.decode/1)
 
-        FrameComponent.new(data_point_type: config.data_point_type, data: data_points)
+        FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)
       end
 
-    DataFrame.new(components: components)
+    label =
+      window_start
+      |> DateTime.add(frame_width_ms, :millisecond)
+      |> DateTime.add(prediction_delay_ms, :millisecond)
+      |> LabelExtraction.get_label(label_config)
+
+    DataFrame.new(components: components, label: label)
   end
 end

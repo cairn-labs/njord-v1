@@ -4,5 +4,5 @@ import "label.proto";
 
 message DataFrame {
   repeated FrameComponent components = 1;
-  repeated Label labels = 2;
+  Label label = 2;
 }

@@ -26,4 +26,16 @@ defmodule Trader.Selectors do
   end
 
   def from_feature_config(_), do: nil
+
+  def from_label_config(%LabelConfig{
+        label_type: :FX_RATE,
+        fx_rate_config: %FxRateLabelConfig{
+          product: %CurrencyPair{
+            base: base,
+            counter: counter
+          }
+        }
+      }) do
+    "#{Atom.to_string(base)}-#{Atom.to_string(counter)}"
+  end
 end

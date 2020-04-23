@@ -26,7 +26,7 @@ defmodule Trader.Db.DataPoints do
     {selector_expr, selector_value} =
       case selector do
         nil -> {"", []}
-        s -> {"AND selector = $4 ", [selector]}
+        _ -> {"AND selector = $4 ", [selector]}
       end
 
     {:ok, %{rows: rows}} =
@@ -61,7 +61,7 @@ defmodule Trader.Db.DataPoints do
     {selector_expr, selector_value} =
       case selector do
         nil -> {"", []}
-        s -> {"AND selector = $3", [selector]}
+        _ -> {"AND selector = $3", [selector]}
       end
 
     aggregation =
@@ -87,5 +87,23 @@ defmodule Trader.Db.DataPoints do
 
     rows
     |> Enum.map(fn [_ts, value] -> value end)
+  end
+
+  def get_data_at_time(timestamp, data_point_type, selector) do
+    type = DataPointType.mapping()[data_point_type]
+
+    {selector_expr, selector_value} =
+      case selector do
+        nil -> {"", []}
+        _ -> {"AND selector = $3", [selector]}
+      end
+
+    query =
+      "select contents from data where time > $1 AND data_type = $2 #{selector_expr} ORDER BY time asc LIMIT 1;"
+
+    case SQL.query(Repo, query, [timestamp, type] ++ selector_value) do
+      {:ok, %{rows: []}} -> nil
+      {:ok, %{rows: [[contents]]}} -> DataPoint.decode(contents)
+    end
   end
 end

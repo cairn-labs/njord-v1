@@ -13,7 +13,7 @@ feature_configs {
     }
   }
 }
-label_configs {
+label_config {
   prediction_delay_ms: 30000  # 30 seconds
   label_type: FX_RATE
   fx_rate_config {

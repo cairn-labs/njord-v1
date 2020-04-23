@@ -5,5 +5,5 @@ import "label_config.proto";
 message FrameConfig {
   uint64 frame_width_ms = 1;
   repeated FeatureConfig feature_configs = 3;
-  repeated LabelConfig label_configs = 4;
+  LabelConfig label_config = 4;
 }
