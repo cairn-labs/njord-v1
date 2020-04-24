@@ -48,7 +48,7 @@ config :trader, Trader.Coinbase.CoinbaseApi,
   rest_api_url: "https://api.pro.coinbase.com"
 
 config :trader, Trader.Coinbase.L2DataCollector,
-  enable: false,
+  enable: true,
   milliseconds_per_tick: 5_000
 
 # Do not include metadata nor timestamps in development logs
