@@ -1,10 +1,11 @@
-frame_width_ms: 60000  # 1 minute
+frame_width_ms: 3600000
+num_frames_requested: 600
 feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 10000   # 10 seconds
+  bucket_width_ms: 240000
   interpolate_strategy {
-    max_interpolation_time_diff_ms: 20000
+    max_interpolation_time_diff_ms: 60000
   }
   l2_order_book_config {
     product {
@@ -14,7 +15,7 @@ feature_configs {
   }
 }
 label_config {
-  prediction_delay_ms: 30000  # 30 seconds
+  prediction_delay_ms: 1800000  # 30 minutes
   label_type: FX_RATE
   fx_rate_config {
     product {
@@ -22,6 +23,6 @@ label_config {
       counter: USD
     }
     label_direction_only: true
-    movement_minimum_percent_change: 0.02
+    movement_minimum_percent_change: 0.005
   }
 }

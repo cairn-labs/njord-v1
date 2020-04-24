@@ -3,7 +3,7 @@ defmodule Trader.Frames.FrameGeneration do
   alias Trader.Frames.LabelExtraction
   require Logger
 
-  def generate_frames(%FrameConfig{} = frame_config, num_frames) do
+  def generate_frames(%FrameConfig{num_frames_requested: num_frames} = frame_config) do
     case available_windows(frame_config) do
       [] ->
         {:error, :no_data_available}

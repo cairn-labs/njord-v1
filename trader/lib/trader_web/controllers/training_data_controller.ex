@@ -3,14 +3,13 @@ defmodule TraderWeb.TrainingDataController do
   alias TraderWeb.ApiUtil
   require Logger
 
-  def get_training_data(conn, %{"frame_config" => frame_config_upload, "num_frames" => num_frames}) do
+  def get_training_data(conn, %{"frame_config" => frame_config_upload}) do
     frame_config =
       frame_config_upload.path
       |> File.read!()
       |> FrameConfig.decode()
 
-    {:ok, frames} =
-      Trader.Frames.FrameGeneration.generate_frames(frame_config, String.to_integer(num_frames))
+    {:ok, frames} = Trader.Frames.FrameGeneration.generate_frames(frame_config)
 
     files =
       frames

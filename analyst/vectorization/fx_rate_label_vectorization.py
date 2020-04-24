@@ -14,10 +14,10 @@ def vectorize_fx_rate_label(data_frame: DataFrame, frame_config: FrameConfig):
         return None
 
     if label_price >= ((1 + frame_config.label_config.fx_rate_config.movement_minimum_percent_change)
-                      * final_input_price):
+                       * final_input_price):
         return 1
     elif label_price > ((1 - frame_config.label_config.fx_rate_config.movement_minimum_percent_change)
-                      * final_input_price):
+                        * final_input_price):
         return 0
     else:
         return -1
