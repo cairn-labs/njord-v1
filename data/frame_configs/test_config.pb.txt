@@ -1,4 +1,4 @@
-frame_width_ms: 60000  # 2 minute
+frame_width_ms: 60000  # 1 minute
 feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
@@ -21,5 +21,7 @@ label_config {
       base: BTC
       counter: USD
     }
+    label_direction_only: true
+    movement_minimum_percent_change: 0.02
   }
 }

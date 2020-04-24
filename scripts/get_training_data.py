@@ -1,5 +1,4 @@
 import requests
-import json
 from google.protobuf.text_format import Parse
 from analyst.proto.frame_config_pb2 import FrameConfig
 import sys

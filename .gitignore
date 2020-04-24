@@ -1,3 +1,6 @@
 venv/
 .DS_Store
 frames.zip
+.idea/
+*.pyc
+*.pyo

@@ -3,4 +3,6 @@ import "currency_pair.proto";
 
 message FxRateLabelConfig {
   CurrencyPair product = 1;
+  bool label_direction_only = 2;
+  float movement_minimum_percent_change = 3;
 }
