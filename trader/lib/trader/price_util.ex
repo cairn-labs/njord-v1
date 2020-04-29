@@ -13,4 +13,15 @@ defmodule Trader.PriceUtil do
     |> D.div(2)
     |> to_string
   end
+
+  def price_from_order_book(%L2OrderBook{}), do: nil
+
+  def as_float(nil), do: nil
+
+  def as_float(s) do
+    case Float.parse(s) do
+      {f, _} -> f
+      _ -> nil
+    end
+  end
 end

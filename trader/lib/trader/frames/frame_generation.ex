@@ -3,7 +3,12 @@ defmodule Trader.Frames.FrameGeneration do
   alias Trader.Frames.LabelExtraction
   require Logger
 
-  def generate_frames(%FrameConfig{num_frames_requested: num_frames} = frame_config) do
+  def generate_frames(
+        %FrameConfig{
+          num_frames_requested: num_frames,
+          sampling_strategy: %{sampling_strategy_type: :RANDOM_WINDOW}
+        } = frame_config
+      ) do
     case available_windows(frame_config) do
       [] ->
         {:error, :no_data_available}
@@ -15,6 +20,17 @@ defmodule Trader.Frames.FrameGeneration do
       windows ->
         extract_frames(Enum.take_random(windows, num_frames), frame_config)
     end
+  end
+
+  def generate_frames(
+        %FrameConfig{
+          num_frames_requested: num_frames,
+          sampling_strategy: %{
+            sampling_strategy_type: :STRATIFIED_RANDOM_WINDOW
+          }
+        } = frame_config
+      ) do
+    :ok
   end
 
   defp available_windows(%FrameConfig{

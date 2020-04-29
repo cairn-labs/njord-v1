@@ -1,10 +1,12 @@
 syntax = "proto3";
 import "feature_config.proto";
 import "label_config.proto";
+import "sampling_strategy.proto";
 
 message FrameConfig {
   uint64 frame_width_ms = 1;
   repeated FeatureConfig feature_configs = 3;
   LabelConfig label_config = 4;
   uint32 num_frames_requested = 5;
+  SamplingStrategy sampling_strategy = 6;
 }

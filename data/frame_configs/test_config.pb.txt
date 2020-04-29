@@ -1,11 +1,11 @@
-frame_width_ms: 3600000
+frame_width_ms: 360000
 num_frames_requested: 600
 feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 240000
+  bucket_width_ms: 24000
   interpolate_strategy {
-    max_interpolation_time_diff_ms: 60000
+    max_interpolation_time_diff_ms: 24000
   }
   l2_order_book_config {
     product {
@@ -15,7 +15,7 @@ feature_configs {
   }
 }
 label_config {
-  prediction_delay_ms: 1800000  # 30 minutes
+  prediction_delay_ms: 180000
   label_type: FX_RATE
   fx_rate_config {
     product {
@@ -23,6 +23,23 @@ label_config {
       counter: USD
     }
     label_direction_only: true
-    movement_minimum_percent_change: 0.005
+    movement_minimum_percent_change: 0.002
+  }
+}
+sampling_strategy {
+  sampling_strategy_type: STRATIFIED_RANDOM_WINDOW
+  stratified_random_window_params {
+    target_label_probability {
+      label_value: "1"
+      target_probability: 0.3
+    }
+    target_label_probability {
+      label_value: "0"
+      target_probability: 0.3
+    }
+    target_label_probability {
+      label_value: "-1"
+      target_probability: 0.3
+    }
   }
 }

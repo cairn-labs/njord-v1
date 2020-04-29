@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+enum SamplingStrategyType {
+  UNKNOWN_SAMPLING_STRATEGY_TYPE = 0;
+  RANDOM_WINDOW = 1;
+  STRATIFIED_RANDOM_WINDOW = 2;
+}
+
+message StratifiedRandomWindowStrategyParams {
+  message TargetLabelProbability {
+    string label_value = 1;
+    float target_probability = 2;
+  }
+  repeated TargetLabelProbability target_label_probability = 1;
+}
+
+message SamplingStrategy {
+  SamplingStrategyType sampling_strategy_type = 1;
+
+  StratifiedRandomWindowStrategyParams stratified_random_window_params = 2;
+}

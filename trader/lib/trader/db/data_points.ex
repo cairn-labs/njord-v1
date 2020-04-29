@@ -106,4 +106,17 @@ defmodule Trader.Db.DataPoints do
       {:ok, %{rows: [[contents]]}} -> DataPoint.decode(contents)
     end
   end
+
+  def update_selector(datapoint_id, selector) do
+    {:ok, _} =
+      SQL.query(Repo, "UPDATE data SET selector = $1 WHERE id = $2", [selector, datapoint_id])
+
+    :ok
+  end
+
+  def update_price(datapoint_id, price) do
+    {:ok, _} = SQL.query(Repo, "UPDATE data SET price = $1 WHERE id = $2", [price, datapoint_id])
+
+    :ok
+  end
 end

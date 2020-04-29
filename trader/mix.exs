@@ -45,7 +45,8 @@ defmodule Trader.MixProject do
       {:httpoison, "~> 1.6"},
       {:plug_cowboy, "~> 2.0"},
       {:protobuf, "~> 0.7.1"},
-      {:decimal, "~> 1.0"}
+      {:decimal, "~> 1.0"},
+      {:flow, "~> 1.0.0"}
     ]
   end
 
