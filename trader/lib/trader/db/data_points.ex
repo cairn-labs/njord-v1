@@ -57,11 +57,12 @@ defmodule Trader.Db.DataPoints do
         selector
       ) do
     type = DataPointType.mapping()[data_point_type]
+    limit = floor(frame_width_ms / bucket_width_ms)
 
     {selector_expr, selector_value} =
       case selector do
         nil -> {"", []}
-        _ -> {"AND selector = $3", [selector]}
+        _ -> {"AND selector = $4", [selector]}
       end
 
     aggregation =
@@ -80,10 +81,12 @@ defmodule Trader.Db.DataPoints do
     FROM data
     WHERE data_type = $1 #{selector_expr} AND time >= $2
     AND TIME < $2 + interval '#{frame_width_ms}  milliseconds'
-    GROUP BY bucket ORDER BY bucket ASC;
+    GROUP BY bucket ORDER BY bucket ASC
+    LIMIT $3;
     """
 
-    {:ok, %{rows: rows}} = SQL.query(Repo, query, [type, start_timestamp] ++ selector_value)
+    {:ok, %{rows: rows}} =
+      SQL.query(Repo, query, [type, start_timestamp, limit] ++ selector_value)
 
     rows
     |> Enum.map(fn [_ts, value] -> value end)

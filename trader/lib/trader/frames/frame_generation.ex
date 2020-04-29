@@ -133,36 +133,31 @@ defmodule Trader.Frames.FrameGeneration do
 
   defp extract_frames(window_starts, %FrameConfig{} = config) do
     frames =
-      for start <- window_starts do
-        extract_frame(start, config)
-      end
+      window_starts
+      |> Enum.flat_map(fn start ->
+        try do
+          frame = extract_frame(start, config)
+          [frame]
+        rescue
+          e in FunctionClauseError ->
+            []
+        end
+      end)
 
     {:ok, frames}
   end
 
-  defp extract_frame(window_start, %FrameConfig{
-         feature_configs: feature_configs,
-         frame_width_ms: frame_width_ms,
-         label_config:
-           %LabelConfig{
-             prediction_delay_ms: prediction_delay_ms
-           } = label_config
-       }) do
-    components =
-      for feature_config <- feature_configs do
-        selector = Trader.Selectors.from_feature_config(feature_config)
-
-        data_points =
-          Db.DataPoints.get_frame_component(
-            feature_config,
-            window_start,
-            frame_width_ms,
-            selector
-          )
-          |> Enum.map(&DataPoint.decode/1)
-
-        FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)
-      end
+  defp extract_frame(
+         window_start,
+         %FrameConfig{
+           frame_width_ms: frame_width_ms,
+           label_config:
+             %LabelConfig{
+               prediction_delay_ms: prediction_delay_ms
+             } = label_config
+         } = frame_config
+       ) do
+    components = extract_frame_components(window_start, frame_config)
 
     label =
       window_start
@@ -171,5 +166,25 @@ defmodule Trader.Frames.FrameGeneration do
       |> LabelExtraction.get_label(label_config)
 
     DataFrame.new(components: components, label: label)
+  end
+
+  defp extract_frame_components(window_start, %FrameConfig{
+         feature_configs: feature_configs,
+         frame_width_ms: frame_width_ms
+       }) do
+    for feature_config <- feature_configs do
+      selector = Trader.Selectors.from_feature_config(feature_config)
+
+      data_points =
+        Db.DataPoints.get_frame_component(
+          feature_config,
+          window_start,
+          frame_width_ms,
+          selector
+        )
+        |> Enum.map(&DataPoint.decode/1)
+
+      FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)
+    end
   end
 end
