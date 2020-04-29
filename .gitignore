@@ -4,3 +4,4 @@ frames.zip
 .idea/
 *.pyc
 *.pyo
+nohup.out
