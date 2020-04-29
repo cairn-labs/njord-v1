@@ -17,4 +17,8 @@ defmodule Trader.Frames.LabelExtraction do
         nil
     end
   end
+
+  def label_to_direction(:FX_RATE, "1"), do: :up
+  def label_to_direction(:FX_RATE, "0"), do: :flat
+  def label_to_direction(:FX_RATE, "-1"), do: :down
 end

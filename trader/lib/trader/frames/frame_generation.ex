@@ -5,8 +5,7 @@ defmodule Trader.Frames.FrameGeneration do
 
   def generate_frames(
         %FrameConfig{
-          num_frames_requested: num_frames,
-          sampling_strategy: %{sampling_strategy_type: :RANDOM_WINDOW}
+          num_frames_requested: num_frames
         } = frame_config
       ) do
     case available_windows(frame_config) do
@@ -22,20 +21,10 @@ defmodule Trader.Frames.FrameGeneration do
     end
   end
 
-  def generate_frames(
-        %FrameConfig{
-          num_frames_requested: num_frames,
-          sampling_strategy: %{
-            sampling_strategy_type: :STRATIFIED_RANDOM_WINDOW
-          }
-        } = frame_config
-      ) do
-    :ok
-  end
-
   defp available_windows(%FrameConfig{
          frame_width_ms: frame_width_ms,
-         feature_configs: feature_configs
+         feature_configs: feature_configs,
+         sampling_strategy: %{sampling_strategy_type: :RANDOM_WINDOW}
        }) do
     required_types =
       feature_configs
@@ -61,6 +50,38 @@ defmodule Trader.Frames.FrameGeneration do
       MapSet.size(Enum.into(types, MapSet.new())) == MapSet.size(required_types)
     end)
     |> Enum.map(fn {ts, _} -> ts end)
+  end
+
+  defp available_windows(%FrameConfig{
+         frame_width_ms: frame_width_ms,
+         label_config: %{
+           label_type: :FX_RATE,
+           prediction_delay_ms: prediction_delay_ms,
+           fx_rate_config: %{
+             movement_minimum_percent_change: price_change_amount
+           }
+         },
+         sampling_strategy: %{stratified_random_window_params: sampling_params}
+       }) do
+    window_starts_with_probability =
+      sampling_params.target_label_probability
+      |> Enum.filter(fn %{target_probability: p} -> p > 0 end)
+      |> Enum.map(fn %{label_value: label_value, target_probability: probability} ->
+        {Db.DataPoints.get_windows_by_price_change(
+           Trader.Frames.LabelExtraction.label_to_direction(:FX_RATE, label_value),
+           price_change_amount,
+           frame_width_ms,
+           prediction_delay_ms
+         ), probability}
+      end)
+
+    min_quotient =
+      window_starts_with_probability
+      |> Enum.map(fn {times, p} -> length(times) / p end)
+      |> Enum.min()
+
+    window_starts_with_probability
+    |> Enum.flat_map(fn {times, p} -> Enum.take_random(times, floor(min_quotient * p)) end)
   end
 
   defp available_windows_by_type(%FeatureConfig{interpolate_strategy: nil}, _) do

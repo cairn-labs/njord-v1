@@ -5,7 +5,7 @@ from analyst.dataset import DataSet
 from analyst.training import train_dataset
 import sys
 
-URL = f'http://gpu:4000/api/get_training_data'
+URL = f'http://localhost:4000/api/get_training_data'
 LOCAL_DATASET_LOCATION = '/tmp/frames.zip'
 
 with open(sys.argv[1]) as handle:

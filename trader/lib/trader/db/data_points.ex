@@ -119,4 +119,42 @@ defmodule Trader.Db.DataPoints do
 
     :ok
   end
+
+  def get_windows_by_price_change(direction, amount, frame_width_ms, prediction_delay_ms) do
+    prediction_upper_bound_ms = 2 * prediction_delay_ms
+
+    price_clause =
+      case direction do
+        :up ->
+          "and prediction_end_price > (1.0 + $1) * window_end_price"
+
+        :down ->
+          "and prediction_end_price < (1.0 - $1) * window_end_price"
+
+        :flat ->
+          "and prediction_end_price > (1.0 - $1) * window_end_price and prediction_end_price < (1.0 + $1) * window_end_price"
+      end
+
+    query = """
+    SELECT window_begin_time, window_end_price, prediction_end_price
+    FROM (SELECT time - INTERVAL '#{frame_width_ms} milliseconds' AS window_begin_time,
+                 price                                            AS window_end_price,
+                 (SELECT price
+                  FROM data AS data_inner
+                  WHERE time > data_outer.time + INTERVAL '#{prediction_delay_ms} milliseconds'
+                    AND time < data_outer.time + INTERVAL '#{prediction_upper_bound_ms} milliseconds'
+                  ORDER BY time
+                  LIMIT 1)                                        AS prediction_end_price
+          FROM data AS data_outer) AS subquery
+    WHERE window_end_price is not null
+      and prediction_end_price is not null
+      #{price_clause}
+    ORDER BY random()
+    """
+
+    {:ok, %{rows: rows}} = SQL.query(Repo, query, [amount])
+
+    rows
+    |> Enum.map(fn [ts, _, _] -> ts end)
+  end
 end
