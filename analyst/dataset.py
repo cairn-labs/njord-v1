@@ -3,6 +3,7 @@ import zipfile
 import glob
 import os
 from collections import Counter
+import random
 
 from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.frame_config_pb2 import FrameConfig
@@ -17,6 +18,7 @@ class DataSet:
             if input_vector is None or label is None:
                 continue
             self.labeled_data.append((input_vector, label))
+        random.shuffle(self.labeled_data)
 
     def stream_dataset_frames(self, dataset_filename: str):
         with tempfile.TemporaryDirectory() as temp_dir:
