@@ -10,13 +10,19 @@ defmodule Trader.Db.DataPoints do
     ts = TimeUtil.int_to_datetime(datapoint.event_timestamp)
     type = DataPointType.mapping()[datapoint.data_point_type]
     selector = Trader.Selectors.from_data_point(datapoint)
+
+    price =
+      datapoint
+      |> Trader.PriceUtil.price_from_data_point()
+      |> Trader.PriceUtil.as_float()
+
     data = DataPoint.encode(datapoint)
 
     {:ok, _} =
       SQL.query(
         Repo,
-        "INSERT INTO data (time, data_type, selector, contents) VALUES ($1, $2, $3, $4);",
-        [ts, type, selector, data]
+        "INSERT INTO data (time, data_type, selector, price, contents) VALUES ($1, $2, $3, $4, $5);",
+        [ts, type, selector, price, data]
       )
   end
 

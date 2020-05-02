@@ -1,6 +1,14 @@
 defmodule Trader.PriceUtil do
   alias Decimal, as: D
 
+  def price_from_data_point(%DataPoint{data_point_type: :L2_ORDER_BOOK, l2_order_book: book}) do
+    price_from_order_book(book)
+  end
+
+  def price_from_data_point(_) do
+    nil
+  end
+
   def price_from_order_book(%L2OrderBook{
         asks: [%L2OrderBookEntry{price: best_ask_str} | _],
         bids: [%L2OrderBookEntry{price: best_bid_str} | _]
