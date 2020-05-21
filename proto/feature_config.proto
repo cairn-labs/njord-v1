@@ -3,6 +3,7 @@ import "data_point.proto";
 import "bucketing_strategy.proto";
 import "interpolate_strategy.proto";
 import "l2_order_book.proto";
+import "vectorization_strategy.proto";
 
 
 message FeatureConfig {
@@ -10,6 +11,7 @@ message FeatureConfig {
   uint64 bucket_width_ms = 2;
   BucketingStrategy bucketing_strategy = 3;
   InterpolateStrategy interpolate_strategy = 4;
+  VectorizationStrategy vectorization_strategy = 6;
 
   L2OrderBookConfig l2_order_book_config = 5;
 }

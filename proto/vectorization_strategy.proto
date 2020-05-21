@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+enum VectorizationStrategy {
+  UNKNOWN_VECTORIZATION_STRATEGY = 0;
+  FULL_ORDER_BOOK = 1;
+  PRICE_ONLY = 2;
+}
