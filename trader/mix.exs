@@ -46,7 +46,8 @@ defmodule Trader.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:protobuf, "~> 0.7.1"},
       {:decimal, "~> 1.0"},
-      {:flow, "~> 1.0.0"}
+      {:flow, "~> 1.0.0"},
+      {:hackney, github: "benoitc/hackney", override: true}
     ]
   end
 

@@ -3,8 +3,8 @@
 
 sudo add-apt-repository ppa:timescale/timescaledb-ppa
 sudo apt-get update
-sudo apt install -y timescaledb-postgresql-10
-sudo sh -c $'echo "shared_preload_libraries = \'timescaledb\'" >> /etc/postgresql/10/main/postgresql.conf'
+sudo apt install -y timescaledb-postgresql-12
+sudo sh -c $'echo "shared_preload_libraries = \'timescaledb\'" >> /etc/postgresql/12/main/postgresql.conf'
 
 sleep 5
 sudo service postgresql restart

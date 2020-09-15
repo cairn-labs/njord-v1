@@ -54,7 +54,9 @@ defmodule Trader.Coinbase.L2DataCollector do
          {:ok, data} <- Jason.decode(body) do
       {:ok, data}
     else
-      _ -> :error
+      m ->
+        Logger.error(inspect(m))
+        :error
     end
   end
 
