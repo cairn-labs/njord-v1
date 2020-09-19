@@ -10,7 +10,8 @@ defmodule Trader.Application do
     children = [
       Trader.Repo,
       TraderWeb.Endpoint,
-      Trader.Coinbase.L2DataCollector
+      Trader.Coinbase.L2DataCollector,
+      Trader.Newsapi.NewsapiDataCollector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

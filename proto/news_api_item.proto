@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+enum SearchType {
+    QUERY = 0;
+    TOP_HEADLINES = 1;
+}
+
+message NewsApiItem {
+    string source = 1;
+    string title = 2;
+    string description = 3;
+    string url = 4;
+    string content = 5;    
+    SearchType search_type = 6;    
+    string country = 7;
+    string query = 8;
+}

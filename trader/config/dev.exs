@@ -52,6 +52,12 @@ config :trader, Trader.Coinbase.L2DataCollector,
   enable: true,
   milliseconds_per_tick: 5_000
 
+config :trader, Trader.Newsapi.NewsapiDataCollector,
+  enable: true,
+  api_key: System.get_env("NEWSAPI_KEY"),
+  max_calls_per_day: 450
+
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 

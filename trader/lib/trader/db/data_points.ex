@@ -26,6 +26,24 @@ defmodule Trader.Db.DataPoints do
       )
   end
 
+  def insert_datapoint_if_not_exists(%DataPoint{} = datapoint) do
+    type = DataPointType.mapping()[datapoint.data_point_type]
+    selector = Trader.Selectors.from_data_point(datapoint)
+
+    case SQL.query(
+          Repo,
+          "SELECT id FROM data WHERE data_type = $1 AND selector = $2;",
+          [type, selector]
+        ) do
+
+      {:ok, %{rows: []}} ->
+        insert_datapoint(datapoint)
+
+      _ ->
+        :ok
+    end
+  end
+
   def get_available_windows(data_point_type, max_time_diff_ms, frame_width_ms, selector) do
     type = DataPointType.mapping()[data_point_type]
 
