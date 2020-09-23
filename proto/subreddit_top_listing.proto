@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message RedditPost {
+    string title = 1;
+    string permalink = 2;
+    string text = 3;
+    string url = 4;
+    int32 upvotes = 5;
+    float upvote_ratio = 6;
+    int64 created_utc = 7;
+}
+
+message SubredditTopListing {
+    string subreddit_name = 1;
+    repeated RedditPost posts = 2;
+}

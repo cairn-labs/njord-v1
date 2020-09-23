@@ -11,7 +11,8 @@ defmodule Trader.Application do
       Trader.Repo,
       TraderWeb.Endpoint,
       Trader.Coinbase.L2DataCollector,
-      Trader.Newsapi.NewsapiDataCollector
+      Trader.Newsapi.NewsapiDataCollector,
+      Trader.Reddit.RedditDataCollector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

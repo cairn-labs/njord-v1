@@ -13,12 +13,18 @@ defmodule Trader.Selectors do
     "#{Atom.to_string(base)}-#{Atom.to_string(counter)}"
   end
 
-  def from_data_point(%DataPoint
-    {
-      data_point_type: :NEWS_API_ITEM,
-      news_api_item: %NewsApiItem{url: url}
-    }) do
+  def from_data_point(%DataPoint{
+        data_point_type: :NEWS_API_ITEM,
+        news_api_item: %NewsApiItem{url: url}
+      }) do
     url
+  end
+
+  def from_data_point(%DataPoint{
+        data_point_type: :SUBREDDIT_TOP_LISTING,
+        subreddit_top_listing: %SubredditTopListing{subreddit_name: name}
+      }) do
+    name
   end
 
   def from_data_point(d) do

@@ -49,14 +49,21 @@ config :trader, Trader.Coinbase.CoinbaseApi,
   rest_api_url: "https://api.pro.coinbase.com"
 
 config :trader, Trader.Coinbase.L2DataCollector,
-  enable: true,
+  enable: false,
   milliseconds_per_tick: 5_000
 
 config :trader, Trader.Newsapi.NewsapiDataCollector,
-  enable: true,
+  enable: false,
   api_key: System.get_env("NEWSAPI_KEY"),
   max_calls_per_day: 450
 
+config :trader, Trader.Reddit.RedditDataCollector,
+  enable: true,
+  api_secret: System.get_env("REDDIT_API_SECRET"),
+  api_id: System.get_env("REDDIT_API_ID"),
+  api_user: System.get_env("REDDIT_API_USER"),
+  api_password: System.get_env("REDDIT_API_PASSWORD"),
+  max_calls_per_minute: 30
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

@@ -1,11 +1,14 @@
 syntax = "proto3";
 import "l2_order_book.proto";
 import "news_api_item.proto";
+import "subreddit_top_listing.proto";
+
 
 enum DataPointType {
     UNKNOWN_DATA_POINT_TYPE = 0;
     L2_ORDER_BOOK = 1;
     NEWS_API_ITEM = 2;
+    SUBREDDIT_TOP_LISTING = 3;
 }
 
 message DataPoint {
@@ -14,4 +17,5 @@ message DataPoint {
 
     L2OrderBook l2_order_book = 3;
     NewsApiItem news_api_item = 4;
+    SubredditTopListing subreddit_top_listing = 5;
 }
