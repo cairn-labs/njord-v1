@@ -24,8 +24,7 @@ def train_dataset(dataset: DataSet):
     model.add(Dense(50))
     model.add(Dense(3, activation='softmax'))
     model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train, epochs=150, batch_size=32)
+    model.fit(X_train, y_train, epochs=15, batch_size=32)
     loss, accuracy = model.evaluate(X_test, y_test)
     print(loss)
     print(accuracy)
-
