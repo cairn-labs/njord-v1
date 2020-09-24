@@ -11,14 +11,13 @@ use Mix.Config
 # before starting your production server.
 config :trader, TraderWeb.Endpoint,
   url: [host: "trader.tendies.ai", port: 80],
-  cache_static_manifest: "priv/static/cache_manifest.json",
   http: [port: 80, protocol_options: [idle_timeout: 5_000_000, request_timeout: 5_000_000]],
   debug_errors: false,
   code_reloader: false,
-  check_origin: false,
+  check_origin: false
 
-# Do not print debug messages in production
-config :logger, level: :info
+# For now, do print debug messages in production
+config :logger, level: :debug
 
 
 config :trader, Trader.Repo,
