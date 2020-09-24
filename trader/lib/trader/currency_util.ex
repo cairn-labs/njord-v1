@@ -10,4 +10,7 @@ defmodule Trader.CurrencyUtil do
 
   def currency_from_string("BTC"), do: :BTC
   def currency_from_string("USD"), do: :USD
+  def currency_from_string("ETH"), do: :ETH
+  def currency_from_string("LTC"), do: :LTC
+  def currency_from_string("XRP"), do: :XRP
 end

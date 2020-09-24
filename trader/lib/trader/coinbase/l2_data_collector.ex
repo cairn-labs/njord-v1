@@ -4,7 +4,15 @@ defmodule Trader.Coinbase.L2DataCollector do
   alias Trader.Db
   alias Trader.Coinbase.CoinbaseApi, as: Api
 
-  @all_products ["BTC-USD"]
+  @all_products [
+    "BTC-USD",
+    "ETH-USD",
+    "XRP-USD",
+    "LTC-USD",
+    "ETH-BTC",
+    "XRP-BTC",
+    "LTC-BTC"
+  ]
 
   ##########
   # Client #
