@@ -10,11 +10,25 @@ use Mix.Config
 # which you should run after static files are built and
 # before starting your production server.
 config :trader, TraderWeb.Endpoint,
-  url: [host: "example.com", port: 80],
-  cache_static_manifest: "priv/static/cache_manifest.json"
+  url: [host: "trader.tendies.ai", port: 80],
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  http: [port: 80, protocol_options: [idle_timeout: 5_000_000, request_timeout: 5_000_000]],
+  debug_errors: false,
+  code_reloader: false,
+  check_origin: false,
 
 # Do not print debug messages in production
 config :logger, level: :info
+
+
+config :trader, Trader.Repo,
+  username: "trader_dev",
+  password: System.get_env("DB_PASSWORD"),
+  database: "trader_dev",
+  hostname: "localhost",
+  show_sensitive_data_on_connection_error: false,
+  pool_size: 20,
+  timeout: 600_000
 
 # ## SSL Support
 #
@@ -49,7 +63,3 @@ config :logger, level: :info
 #       force_ssl: [hsts: true]
 #
 # Check `Plug.SSL` for all available options in `force_ssl`.
-
-# Finally import the config/prod.secret.exs which loads secrets
-# and configuration from environment variables.
-import_config "prod.secret.exs"
