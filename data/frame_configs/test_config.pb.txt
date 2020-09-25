@@ -1,16 +1,16 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 360000
-num_frames_requested: 4000
+frame_width_ms: 18000000
+num_frames_requested: 100
 feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 24000
+  bucket_width_ms: 1200000
   interpolate_strategy {
-    max_interpolation_time_diff_ms: 24000
+    max_interpolation_time_diff_ms: 1200000
   }
-  vectorization_strategy: PRICE_ONLY
+  vectorization_strategy: FULL_ORDER_BOOK
   l2_order_book_config {
     product {
       base: BTC
@@ -19,7 +19,7 @@ feature_configs {
   }
 }
 label_config {
-  prediction_delay_ms: 24000
+  prediction_delay_ms: 1200000
   label_type: FX_RATE
   fx_rate_config {
     product {
@@ -27,7 +27,7 @@ label_config {
       counter: USD
     }
     label_direction_only: true
-    movement_minimum_percent_change: 0.001
+    movement_minimum_percent_change: 0.005
   }
 }
 sampling_strategy {
