@@ -15,5 +15,6 @@ defmodule TraderWeb.Router do
     pipe_through(:api)
 
     post("/get_training_data", TrainingDataController, :get_training_data)
+    post("/test_predict", TrainingDataController, :test_predict)
   end
 end

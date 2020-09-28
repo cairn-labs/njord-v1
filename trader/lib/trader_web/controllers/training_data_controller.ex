@@ -21,4 +21,18 @@ defmodule TraderWeb.TrainingDataController do
     {:ok, {'mem', zip_bin}} = :zip.create('mem', files, [:memory])
     send_download(conn, {:binary, zip_bin}, filename: "frames.zip")
   end
+
+  def test_predict(conn, %{"config" => config_upload}) do
+    config =
+      config_upload.path
+      |> File.read!()
+      |> PredictionModelConfig.decode()
+
+    Trader.PredictionModels.Inference.predict(
+      ~U[2020-09-25 03:42:39.324554Z],
+      config
+    )
+
+    ApiUtil.send_success(conn, %{message: "OK"})
+  end
 end

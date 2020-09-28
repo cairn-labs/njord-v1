@@ -1,0 +1,8 @@
+syntax = "proto3";
+import "frame_config.proto";
+
+
+message PredictionModelConfig {
+    string name = 1;
+    FrameConfig frame_config = 3;
+}

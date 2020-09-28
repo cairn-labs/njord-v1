@@ -3,6 +3,9 @@ defmodule Trader.Frames.FrameGeneration do
   alias Trader.Frames.LabelExtraction
   require Logger
 
+  @doc """
+  Gets a set of frames including labels, as specified by a provided FrameConfig
+  """
   def generate_frames(
         %FrameConfig{
           num_frames_requested: num_frames
@@ -19,6 +22,21 @@ defmodule Trader.Frames.FrameGeneration do
       windows ->
         extract_frames(Enum.take_random(windows, num_frames), frame_config)
     end
+  end
+
+  @doc """
+  Gets the single frame immediately leading up to a provided timestamp. Does not
+  include any label information.
+  """
+  def generate_input_frame(
+        current_time,
+        %FrameConfig{
+          frame_width_ms: frame_width_ms
+        } = frame_config
+      ) do
+    window_start = current_time |> DateTime.add(-frame_width_ms, :millisecond)
+    components = extract_frame_components(window_start, frame_config)
+    DataFrame.new(components: components)
   end
 
   defp available_windows(%FrameConfig{

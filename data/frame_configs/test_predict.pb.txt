@@ -1,0 +1,23 @@
+# proto-file: prediction_model_config.proto
+# proto-message: PredictionModelConfig
+
+
+name: "simple_linear_regression"
+frame_config {
+  frame_width_ms: 300000
+  feature_configs {
+    data_point_type: L2_ORDER_BOOK
+    bucketing_strategy: EARLIEST
+    bucket_width_ms: 30000
+    interpolate_strategy {
+      max_interpolation_time_diff_ms: 30000
+    }
+    vectorization_strategy: FULL_ORDER_BOOK
+    l2_order_book_config {
+      product {
+        base: BTC
+        counter: USD
+      }
+    }
+  }
+}
