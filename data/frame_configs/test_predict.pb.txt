@@ -9,10 +9,7 @@ frame_config {
     data_point_type: L2_ORDER_BOOK
     bucketing_strategy: EARLIEST
     bucket_width_ms: 30000
-    interpolate_strategy {
-      max_interpolation_time_diff_ms: 30000
-    }
-    vectorization_strategy: FULL_ORDER_BOOK
+    vectorization_strategy: PRICE_ONLY
     l2_order_book_config {
       product {
         base: BTC
@@ -20,4 +17,7 @@ frame_config {
       }
     }
   }
+}
+label_config {
+  prediction_delay_ms: 30000
 }

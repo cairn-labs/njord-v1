@@ -28,7 +28,7 @@ defmodule TraderWeb.TrainingDataController do
       |> File.read!()
       |> PredictionModelConfig.decode()
 
-    Trader.PredictionModels.Inference.predict(
+    Trader.Analyst.predict_price(
       ~U[2020-09-25 03:42:39.324554Z],
       config
     )

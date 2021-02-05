@@ -7,10 +7,8 @@ defmodule Trader.Coinbase.L2DataCollector do
   @all_products [
     "BTC-USD",
     "ETH-USD",
-    "XRP-USD",
     "LTC-USD",
     "ETH-BTC",
-    "XRP-BTC",
     "LTC-BTC"
   ]
 
