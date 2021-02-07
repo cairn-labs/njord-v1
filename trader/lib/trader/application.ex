@@ -12,7 +12,8 @@ defmodule Trader.Application do
       TraderWeb.Endpoint,
       Trader.Coinbase.L2DataCollector,
       Trader.Newsapi.NewsapiDataCollector,
-      Trader.Reddit.RedditDataCollector
+      Trader.Reddit.RedditDataCollector,
+      Trader.Polygon.StockAggregateCollector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

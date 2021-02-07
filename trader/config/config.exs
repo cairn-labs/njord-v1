@@ -36,6 +36,14 @@ config :trader, Trader.Coinbase.L2DataCollector,
   enable: false,
   milliseconds_per_tick: 5_000
 
+config :trader, Trader.Polygon.PolygonApi,
+  api_key: System.get_env("POLYGON_API_KEY"),
+  rest_api_url: "https://api.polygon.io/"
+
+config :trader, Trader.Polygon.StockAggregateCollector,
+  enable: true,
+  milliseconds_per_tick: 10_000
+
 config :trader, Trader.Newsapi.NewsapiDataCollector,
   enable: false,
   api_key: System.get_env("NEWSAPI_KEY"),
