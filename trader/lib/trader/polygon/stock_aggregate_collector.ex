@@ -3,6 +3,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
   use GenServer
   alias Trader.Db
   alias Trader.Polygon.PolygonApi, as: Api
+  alias Trader.DataCache, as: Cache
 
   ##########
   # Client #
@@ -19,7 +20,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
       queue_next_tick(self())
     end
 
-    {:ok, %{all_products: get_all_tickers()}}
+    {:ok, %{all_products: Cache.cached("all-tickers", 604800, &get_all_tickers/0)}}
   end
 
   @impl true
