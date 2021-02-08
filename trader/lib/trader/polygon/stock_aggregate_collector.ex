@@ -94,7 +94,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
       []
     else
       Map.get(results, "results")
-      |> Enum.map(fn data -> aggregate_to_proto(data, ticker, window_length_minutes) end)
+      |> Enum.flat_map(fn data -> aggregate_to_proto(data, ticker, window_length_minutes) end)
       |> Enum.each(&Db.DataPoints.insert_datapoint/1)
     end
   end
@@ -113,22 +113,28 @@ defmodule Trader.Polygon.StockAggregateCollector do
         ticker,
         width_minutes
       ) do
-    DataPoint.new(
-      event_timestamp: t * 1000,
-      data_point_type: :STONK_AGGREGATE,
-      stonk_aggregate:
-        StonkAggregate.new(
-          ticker: ticker,
-          open_price: o,
-          high_price: h,
-          low_price: l,
-          close_price: c,
-          volume: v,
-          vwap: vw,
-          ts: t,
-          n: n,
-          width_minutes: width_minutes
-        )
-    )
+    [
+      DataPoint.new(
+        event_timestamp: t * 1000,
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate:
+          StonkAggregate.new(
+            ticker: ticker,
+            open_price: o,
+            high_price: h,
+            low_price: l,
+            close_price: c,
+            volume: v,
+            vwap: vw,
+            ts: t,
+            n: n,
+            width_minutes: width_minutes
+          )
+      )
+    ]
+  end
+
+  def aggregate_to_proto(_, _, _) do
+    []
   end
 end
