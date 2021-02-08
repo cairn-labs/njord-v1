@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -x
 
 export MIX_ENV=offline
 cd trader/
