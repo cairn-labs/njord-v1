@@ -27,6 +27,13 @@ defmodule Trader.Selectors do
     name
   end
 
+  def from_data_point(%DataPoint{
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate: %StonkAggregate{ticker: ticker, width_minutes: width}
+      }) do
+    "#{ticker}-#{width}"
+  end
+
   def from_data_point(d) do
     nil
   end

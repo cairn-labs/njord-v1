@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+
+message StonkAggregate {
+    string ticker = 1;
+    float open_price = 2;
+    float high_price = 3;
+    float low_price = 4;
+    float close_price = 5;
+    float volume = 6;
+    float vwap = 7;
+    float ts = 8;
+    float n = 9;
+    int32 width_minutes = 10;
+}

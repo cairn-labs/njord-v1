@@ -14,8 +14,10 @@ defmodule Trader.Polygon.StockAggregateCollector do
   end
 
   def download_range(ticker, start_date, end_date, window_length_minutes) do
-    GenServer.call(__MODULE__,
-      {:download_range, ticker, start_date, end_date, window_length_minutes}
+    GenServer.call(
+      __MODULE__,
+      {:download_range, ticker, start_date, end_date, window_length_minutes},
+      :infinity
     )
   end
 
@@ -30,7 +32,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
       queue_next_tick(self())
     end
 
-    {:ok, %{all_products: Cache.cached("all-tickers", 604800, &get_all_tickers/0)}}
+    {:ok, %{all_products: Cache.cached("all-tickers", 604_800, &get_all_tickers/0)}}
   end
 
   @impl true
@@ -41,12 +43,13 @@ defmodule Trader.Polygon.StockAggregateCollector do
 
   @impl true
   def handle_call(
-    {:download_range, ticker, start_date, end_date, window_length_minutes},
-    _from, state) do
+        {:download_range, ticker, start_date, end_date, window_length_minutes},
+        _from,
+        state
+      ) do
     Trader.TimeUtil.date_range(start_date, end_date)
     |> Stream.chunk_every(5)
     |> Enum.map(fn chunk -> download_chunk(ticker, chunk, window_length_minutes) end)
-
 
     {:reply, :ok, state}
   end
@@ -62,10 +65,13 @@ defmodule Trader.Polygon.StockAggregateCollector do
 
   defp get_all_tickers() do
     Logger.debug("Retrieving all tickers from Polygon...")
-    ticker_stream = Api.paginate(
-      :GET,
-      "v2/reference/tickers?market=stocks&locale=us",
-      fn data -> Map.get(data, "tickers") end)
+
+    ticker_stream =
+      Api.paginate(
+        :GET,
+        "v2/reference/tickers?market=stocks&locale=us",
+        fn data -> Map.get(data, "tickers") end
+      )
 
     ticker_stream
     |> Enum.map(fn m -> Map.get(m, "ticker") end)
@@ -75,13 +81,54 @@ defmodule Trader.Polygon.StockAggregateCollector do
     start_date = List.first(dates)
     end_date = List.last(dates)
     Logger.debug("Downloading #{ticker} aggregates from #{start_date} to #{end_date}...")
-    %HTTPoison.Response{body: body} = Api.call(
-      :GET,
-      "v2/aggs/ticker/#{ticker}/range/#{window_length_minutes}/minute/#{start_date}/#{end_date}"
+
+    %HTTPoison.Response{body: body} =
+      Api.call(
+        :GET,
+        "v2/aggs/ticker/#{ticker}/range/#{window_length_minutes}/minute/#{start_date}/#{end_date}"
+      )
+
+    results = Jason.decode!(body)
+
+    if Map.get(results, "resultsCount") == 0 do
+      []
+    else
+      Map.get(results, "results")
+      |> Enum.map(fn data -> aggregate_to_proto(data, ticker, window_length_minutes) end)
+      |> Enum.each(&Db.DataPoints.insert_datapoint/1)
+    end
+  end
+
+  def aggregate_to_proto(
+        %{
+          "c" => c,
+          "h" => h,
+          "l" => l,
+          "n" => n,
+          "o" => o,
+          "t" => t,
+          "v" => v,
+          "vw" => vw
+        },
+        ticker,
+        width_minutes
+      ) do
+    DataPoint.new(
+      event_timestamp: t * 1000,
+      data_point_type: :STONK_AGGREGATE,
+      stonk_aggregate:
+        StonkAggregate.new(
+          ticker: ticker,
+          open_price: o,
+          high_price: h,
+          low_price: l,
+          close_price: c,
+          volume: v,
+          vwap: vw,
+          ts: t,
+          n: n,
+          width_minutes: width_minutes
+        )
     )
-    body
-    |> Jason.decode!
-    |> inspect
-    |> Logger.info
   end
 end

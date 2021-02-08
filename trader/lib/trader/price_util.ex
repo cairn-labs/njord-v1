@@ -5,6 +5,13 @@ defmodule Trader.PriceUtil do
     price_from_order_book(book)
   end
 
+  def price_from_data_point(%DataPoint{
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate: %StonkAggregate{vwap: vwap}
+      }) do
+    vwap
+  end
+
   def price_from_data_point(_) do
     nil
   end
@@ -25,6 +32,10 @@ defmodule Trader.PriceUtil do
   def price_from_order_book(%L2OrderBook{}), do: nil
 
   def as_float(nil), do: nil
+
+  def as_float(f) when is_float(f) or is_integer(f) do
+    f
+  end
 
   def as_float(s) do
     case Float.parse(s) do
