@@ -1,10 +1,11 @@
 syntax = "proto3";
 import "fx_rate_label_config.proto";
-
+import "stonk_price_label_config.proto";
 
 enum LabelType {
     UNKNOWN_LABEL_TYPE = 0;
     FX_RATE = 1;
+    STONK_PRICE = 2;
 }
 
 message LabelConfig {
@@ -12,4 +13,5 @@ message LabelConfig {
     LabelType label_type = 2;
 
     FxRateLabelConfig fx_rate_config = 3;
+    StonkPriceLabelConfig stonk_price_config = 4;
 }

@@ -1,0 +1,19 @@
+# proto-file: prediction_model_config.proto
+# proto-message: PredictionModelConfig
+
+name: "stonk_to_the_moon"
+frame_config {
+  frame_width_ms: 1200000
+  feature_configs {
+    data_point_type: STONK_AGGREGATE
+    bucketing_strategy: EARLIEST
+    bucket_width_ms: 1200000
+    vectorization_strategy: PRICE_ONLY
+    stonk_aggregate_config {
+      ticker: "SPY"
+    }
+  }
+}
+label_config {
+  prediction_delay_ms: 31536000000
+}

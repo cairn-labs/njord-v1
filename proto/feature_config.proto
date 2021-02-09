@@ -4,6 +4,7 @@ import "bucketing_strategy.proto";
 import "interpolate_strategy.proto";
 import "l2_order_book.proto";
 import "vectorization_strategy.proto";
+import "stonk_aggregate.proto";
 
 
 message FeatureConfig {
@@ -14,4 +15,5 @@ message FeatureConfig {
   VectorizationStrategy vectorization_strategy = 6;
 
   L2OrderBookConfig l2_order_book_config = 5;
+  StonkAggregateConfig stonk_aggregate_config = 7;
 }

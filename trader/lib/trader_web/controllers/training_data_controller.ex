@@ -28,8 +28,14 @@ defmodule TraderWeb.TrainingDataController do
       |> File.read!()
       |> PredictionModelConfig.decode()
 
+    # For testing fx rate one
+    # Trader.Analyst.predict_price(
+    #   ~U[2021-02-09 00:12:53.000000Z],
+    #   config
+    # )
+
     Trader.Analyst.predict_price(
-      ~U[2020-09-25 03:42:39.324554Z],
+      ~U[2018-01-09 00:12:53.000000Z],
       config
     )
 

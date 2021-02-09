@@ -1,6 +1,8 @@
 syntax = "proto3";
+import "label_config.proto";
 
 message Label {
   uint64 event_timestamp = 1;
   string value_decimal = 2;
+  LabelConfig label_config = 3;
 }

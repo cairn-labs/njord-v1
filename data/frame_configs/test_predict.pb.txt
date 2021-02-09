@@ -2,7 +2,7 @@
 # proto-message: PredictionModelConfig
 
 
-name: "simple_linear_regression"
+name: "fx_simple_linear_regression"
 frame_config {
   frame_width_ms: 300000
   feature_configs {
