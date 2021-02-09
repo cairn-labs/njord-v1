@@ -4,5 +4,6 @@ import "prediction_model_config.proto";
 message TradingStrategy {
     string name = 1;
     float capital_allocation = 2;
-    PredictionModelConfig prediction_model_config = 3;
+    int32 cadence_ms = 3;
+    PredictionModelConfig prediction_model_config = 4;
 }

@@ -5,6 +5,7 @@ set -x
 # Elixir
 rm -rf trader/lib/proto/*.pb.ex
 protoc -I proto --elixir_out=trader/lib/proto/ proto/*.proto
+cp -R proto/*.proto trader/priv/proto_definitions/
 
 # Python
 source venv/bin/activate

@@ -3,6 +3,7 @@
 
 name: "hold_spy_strategy"
 capital_allocation: 1.0
+cadence_ms: 86400000
 prediction_model_config {
   name: "stonk_to_the_moon"
   frame_config {

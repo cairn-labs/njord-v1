@@ -13,7 +13,8 @@ defmodule Trader.Application do
       Trader.Coinbase.L2DataCollector,
       Trader.Newsapi.NewsapiDataCollector,
       Trader.Reddit.RedditDataCollector,
-      Trader.Polygon.StockAggregateCollector
+      Trader.Polygon.StockAggregateCollector,
+      Trader.Runners.BacktestRunner
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

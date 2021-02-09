@@ -28,7 +28,6 @@ defmodule Trader.Analyst do
     %HTTPoison.Response{body: body, status_code: 200} =
       HTTPoison.post!(url, Jason.encode!(data), [{"Content-Type", "application/json"}])
 
-    prediction = Label.decode(Base.decode64!(body))
-    Logger.info(inspect(prediction))
+    Label.decode(Base.decode64!(body))
   end
 end
