@@ -1,0 +1,14 @@
+syntax = "proto3";
+import "product.proto";
+import "orders.proto";
+
+
+message ProductHolding {
+    Product product = 1;
+    string amount = 2;
+}
+
+message ExchangePositions {
+    repeated ProductHolding holdings = 1;
+    repeated Order order = 2;
+}

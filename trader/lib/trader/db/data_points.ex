@@ -44,6 +44,18 @@ defmodule Trader.Db.DataPoints do
     end
   end
 
+  def get_price_at_time(data_point_type, selector, timestamp) do
+    type = DataPointType.mapping()[data_point_type]
+
+    case SQL.query(Repo,
+          "select price from data where data_type = $1 and selector = $2 and time < $3 ORDER BY time DESC LIMIT 1;",
+          [type, selector, timestamp]
+        ) do
+      {:ok, %{rows: []}} -> nil
+      {:ok, %{rows: [[price]]}} -> price
+    end
+  end
+
   def get_available_windows(data_point_type, max_time_diff_ms, frame_width_ms, selector) do
     type = DataPointType.mapping()[data_point_type]
 

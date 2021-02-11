@@ -2,6 +2,7 @@ defmodule Trader.Runners.BacktestRunner do
   require Logger
   use GenServer
   alias Trader.Db
+  alias Trader.Alpaca.MockAlpaca
 
   @prediction_timeout 30_000
 
@@ -19,6 +20,10 @@ defmodule Trader.Runners.BacktestRunner do
     GenServer.call(__MODULE__, {:load, strategies_dir})
   end
 
+  def set_positions(positions_map) do
+    MockAlpaca.setup(positions_map)
+  end
+
   def run(start_timestamp, end_timestamp) do
     {:ok, start_time, 0} = DateTime.from_iso8601(start_timestamp)
     {:ok, end_time, 0} = DateTime.from_iso8601(end_timestamp)
@@ -30,14 +35,13 @@ defmodule Trader.Runners.BacktestRunner do
         _ -> {date, DateTime.add(date, tick_width, :millisecond)}
       end
     end)
-    |> Stream.flat_map(fn window_start ->
+    |> Enum.each(fn window_start ->
       GenServer.call(
         __MODULE__,
-        {:get_predictions, start_time, window_start},
+        {:submit_predictions, start_time, window_start},
         @prediction_timeout
       )
     end)
-    |> Enum.each(fn p -> Logger.info(inspect(p)) end)
   end
 
   ####################
@@ -74,24 +78,26 @@ defmodule Trader.Runners.BacktestRunner do
 
   @impl true
   def handle_call(
-        {:get_predictions, backtest_start, window_start},
+        {:submit_predictions, backtest_start, window_start},
         _from,
         %{strategies: strategies} = state
       ) do
     tick = DateTime.diff(window_start, backtest_start, :millisecond)
+    MockAlpaca.set_timestamp(window_start)
 
-    # TODO: we definitely need Analyst.predict_price to return 0-N labels instead of always 1
-    predictions =
+    prediction =
       strategies
       |> Enum.filter(fn %TradingStrategy{cadence_ms: cadence} -> rem(tick, cadence) == 0 end)
       |> Enum.map(fn %TradingStrategy{
                        prediction_model_config: prediction_config,
                        name: strategy_name
                      } ->
-        {strategy_name, Trader.Analyst.predict_price(window_start, prediction_config)}
-      end)
+        %Prediction{Trader.Analyst.predict_price(window_start, prediction_config)
+                    | strategy_name: strategy_name}
+    end)
+      |> Enum.each(fn p -> Trader.Orders.OrderCreation.submit_orders(p, :backtest) end)
 
-    {:reply, predictions, state}
+    {:reply, :ok, state}
   end
 
   ###################
@@ -118,7 +124,7 @@ defmodule Trader.Runners.BacktestRunner do
     end
   end
 
-  def get_overall_tick_width(strategies) do
+  defp get_overall_tick_width(strategies) do
     strategies
     |> Enum.map(fn %TradingStrategy{cadence_ms: c} -> c end)
     |> Enum.reduce(fn x, acc -> Integer.gcd(x, acc) end)

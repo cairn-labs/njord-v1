@@ -4,6 +4,7 @@ from analyst.vectorization.frame_vectorization import data_timestamps
 from analyst.proto.data_point_pb2 import DataPointType
 from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.label_pb2 import Label
+from analyst.proto.prediction_pb2 import Prediction
 from analyst.proto.label_config_pb2 import LabelType
 
 
@@ -25,9 +26,10 @@ class StonkToTheMoonModel(PricePredictionModel):
         timestamps = data_timestamps(data_frame, DataPointType.STONK_AGGREGATE)
         target_timestamp = timestamps[-1] + self.prediction_delay_ms_
 
-        label = Label()
+        result = Prediction()
+        label = result.labels.add()
         label.event_timestamp = target_timestamp
         label.value_decimal = "10000000"
         label.label_config.label_type = LabelType.STONK_PRICE
         label.label_config.stonk_price_config.ticker = self.ticker_
-        return label
+        return result

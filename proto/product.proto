@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+
+enum ProductType {
+    UNKNOWN_PRODUCT_TYPE = 0;
+    STONK = 1;
+    CURRENCY = 2;
+}
+
+message Product {
+    ProductType product_type = 1;
+    string product_name = 2;
+}
+
