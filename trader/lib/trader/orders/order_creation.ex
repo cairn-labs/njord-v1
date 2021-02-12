@@ -30,6 +30,8 @@ defmodule Trader.Orders.OrderCreation do
   end
   defp submit_stonk_orders(%Prediction{labels: labels}, exchange) do
     current_positions = exchange.current_positions()
+
+    # Need to add current prices of labels here too.
     current_prices =
       current_positions.holdings
       |> Enum.map(fn %ProductHolding{product: %Product{product_name: ticker}} ->
