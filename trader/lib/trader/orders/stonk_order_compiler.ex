@@ -83,6 +83,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
           target_order_id: order_id
         )
       end)
+      |> remove_zero_orders
 
     cancellation_ids = for %Order{id: i} <- cancellations, do: i
 
@@ -104,6 +105,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
           parent_order_ids: cancellation_ids
         )
       end)
+      |> remove_zero_orders
 
     cancellations ++ sells
   end
@@ -228,6 +230,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
         parent_order_ids: sell_order_ids
       )
     end)
+    |> remove_zero_orders
   end
 
   defp get_order_presumed_liquidity(
@@ -255,5 +258,14 @@ defmodule Trader.Orders.StonkOrderCompiler do
 
   defp get_order_presumed_liquidity(_, _) do
     0
+  end
+
+  def remove_zero_orders(orders) do
+    orders
+    |> Enum.filter(fn
+      %Order{amount: "0"} -> false
+      %Order{amount: "0.0"} -> false
+      _ -> true
+    end)
   end
 end

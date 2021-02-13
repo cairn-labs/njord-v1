@@ -97,61 +97,123 @@ defmodule Trader.Alpaca.MockAlpaca do
 
   @impl true
   def handle_call({:current_price, ticker}, _from, %{timestamp: timestamp} = state) do
-    {:reply,
-     Db.DataPoints.get_price_at_time(
-       :STONK_AGGREGATE,
-       "#{ticker}-#{@aggregate_width}",
-       timestamp
-     ), state}
+    {:reply, get_price(ticker, timestamp), state}
   end
 
   @impl true
   def handle_call(
-    {:submit_order,
-     %Order{order_type: :MARKET_SELL,
-            sell_product: %Product{
-              product_name: ticker
-            },
-            amount: amount_str
-     } = order},
-    _from,
-    %{positions: %ExchangePositions{holdings: holdings},
-      timestamp: timestamp} = state) do
+        {:submit_order,
+         %Order{
+           order_type: :MARKET_SELL,
+           sell_product:
+             %Product{
+               product_name: ticker
+             } = product,
+           amount: amount_str
+         } = order},
+        _from,
+        %{positions: %ExchangePositions{holdings: holdings} = positions, timestamp: timestamp} =
+          state
+      ) do
+    price = get_price(ticker, timestamp)
 
-    price = Db.DataPoints.get_price_at_time(
-      :STONK_AGGREGATE,
-      "#{ticker}-#{@aggregate_width}",
-      timestamp
-    )
+    Logger.info("MARKET_SELL #{ticker}: #{amount_str} @ $#{price}")
 
-    holdings =
+    new_holdings =
       holdings
-      |> Enum.map(fn holding -> update_cash_holding(holding, PriceUtil.as_float(amount_str) * price) end)
+      |> add_to_holding(
+        %Product{product_type: :CURRENCY, product_name: "USD"},
+        PriceUtil.as_float(amount_str) * price
+      )
+      |> add_to_holding(product, -1 * PriceUtil.as_float(amount_str))
 
-    Logger.info("Sell order: #{inspect order}")
-    Logger.info("holdings #{inspect holdings}")
-    {:reply, :ok, state}
+    Logger.info("New holdings: #{inspect(new_holdings)}")
+
+    {:reply, :ok, %{state | positions: %ExchangePositions{positions | holdings: new_holdings}}}
   end
 
   @impl true
-  def handle_call({:submit_order, %Order{order_type: :MARKET_BUY} = order}, _from, state) do
-    Logger.info("Buy order: #{inspect order}")
-    {:reply, :ok, state}
+  def handle_call(
+        {:submit_order,
+         %Order{
+           order_type: :MARKET_BUY,
+           buy_product:
+             %Product{
+               product_name: ticker
+             } = product,
+           amount: amount_str
+         } = order},
+        _from,
+        %{positions: %ExchangePositions{holdings: holdings} = positions, timestamp: timestamp} =
+          state
+      ) do
+    price = get_price(ticker, timestamp)
+
+    Logger.info("MARKET_BUY #{ticker}: #{amount_str} @ $#{price}")
+
+    new_holdings =
+      holdings
+      |> add_to_holding(
+        %Product{product_type: :CURRENCY, product_name: "USD"},
+        -1 * PriceUtil.as_float(amount_str) * price
+      )
+      |> add_to_holding(product, PriceUtil.as_float(amount_str))
+
+    Logger.info("New holdings: #{inspect(new_holdings)}")
+
+    {:reply, :ok, %{state | positions: %ExchangePositions{positions | holdings: new_holdings}}}
   end
 
   ###################
   # Private Methods #
   ###################
 
-  def update_cash_holding(
-    %ProductHolding{product: %Product{product_type: :CURRENCY, product_name: "USD"},
-                    amount: amount_str} = holding,
-    delta) do
-    new = %ProductHolding{holding | amount: "#{PriceUtil.as_float(amount_str) + delta}"}
-    Logger.info("New: #{inspect new}")
-    new
+  defp add_to_holding(holdings, product, delta) do
+    case Enum.find(holdings, fn
+           %ProductHolding{product: ^product} -> true
+           _ -> false
+         end) do
+      nil -> add_new_holding(holdings, product, delta)
+      _ -> update_holding(holdings, product, delta)
+    end
   end
-  def update_cash_holding(holding, _) do
+
+  defp add_new_holding(holdings, product, delta) do
+    [
+      ProductHolding.new(
+        product: product,
+        amount: "#{delta}"
+      )
+      | holdings
+    ]
+  end
+
+  defp update_holding(holdings, product, delta) do
+    holdings
+    |> Enum.map(fn h -> update_holding_impl(h, product, delta) end)
+  end
+
+  defp update_holding_impl(
+         %ProductHolding{
+           product: product,
+           amount: amount_str
+         } = holding,
+         target_product,
+         delta
+       )
+       when product == target_product do
+    %ProductHolding{holding | amount: "#{PriceUtil.as_float(amount_str) + delta}"}
+  end
+
+  defp update_holding_impl(holding, _, _) do
     holding
+  end
+
+  defp get_price(ticker, timestamp) do
+    Db.DataPoints.get_price_at_time(
+      :STONK_AGGREGATE,
+      "#{ticker}-#{@aggregate_width}",
+      timestamp
+    )
   end
 end

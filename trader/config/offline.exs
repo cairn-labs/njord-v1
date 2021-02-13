@@ -23,20 +23,18 @@ config :trader, TraderWeb.Endpoint,
 
 config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 
-config :trader, Trader.Coinbase.L2DataCollector,
-  enable: false
+config :trader, Trader.Coinbase.L2DataCollector, enable: false
 
-config :trader, Trader.Polygon.StockAggregateCollector,
-  enable: false
+config :trader, Trader.Polygon.StockAggregateCollector, enable: false
 
-config :trader, Trader.Newsapi.NewsapiDataCollector,
-  enable: false
+config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
-config :trader, Trader.Reddit.RedditDataCollector,
-  enable: false
+config :trader, Trader.Reddit.RedditDataCollector, enable: false
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+config :logger,
+  format: "[$level] $message\n",
+  level: :info
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.
