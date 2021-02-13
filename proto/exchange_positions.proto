@@ -10,5 +10,5 @@ message ProductHolding {
 
 message ExchangePositions {
     repeated ProductHolding holdings = 1;
-    repeated Order order = 2;
+    repeated Order orders = 2;
 }

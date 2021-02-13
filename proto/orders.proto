@@ -7,6 +7,7 @@ enum OrderType {
     MARKET_SELL = 2;
     LIMIT_BUY = 3;
     LIMIT_SELL = 4;
+    CANCEL_ORDER = 5;
 }
 
 enum OrderStatus {
@@ -18,12 +19,27 @@ enum OrderStatus {
 }
 
 message Order {
-    OrderType order_type = 1;
-    Product buy_product = 2;
-    Product sell_product = 3;
-    string price = 4;
-    OrderStatus status = 5;
-    uint64 placed_timestamp = 6;
-    uint64 expiration_timestamp = 7;
-    uint64 filled_timestamp = 8;    
+    string id = 1;
+
+    OrderType order_type = 2;
+    Product buy_product = 3;
+    Product sell_product = 4;
+    string price = 5;
+    string amount = 12;
+    OrderStatus status = 6;
+    uint64 placed_timestamp = 7;
+    uint64 expiration_timestamp = 8;
+    uint64 filled_timestamp = 9;
+
+    // If set, don't execute this order until all parent orders have been filled
+    repeated string parent_order_ids = 10;
+
+    // If this is an order that directly affects another order (e.g. a CANCEL_ORDER)
+    // then that order id is set here.
+    string target_order_id = 11;
+}
+
+
+message OrderTree {
+    repeated Order orders = 1;
 }

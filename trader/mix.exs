@@ -47,6 +47,7 @@ defmodule Trader.MixProject do
       {:protobuf, "~> 0.7.1"},
       {:decimal, "~> 1.0"},
       {:flow, "~> 1.0.0"},
+      {:uuid, "~> 1.1"},
       {:hackney, github: "benoitc/hackney", override: true}
     ]
   end

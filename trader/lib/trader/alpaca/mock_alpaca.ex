@@ -26,6 +26,11 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:set_timestamp, timestamp})
   end
 
+  def execute_order_tree(%OrderTree{} = order_tree) do
+    Logger.info("Executing orders: #{inspect(order_tree)}")
+    :ok
+  end
+
   ####################
   # Server Callbacks #
   ####################
@@ -37,24 +42,37 @@ defmodule Trader.Alpaca.MockAlpaca do
 
   @impl true
   def handle_call(:reset, _from, _state) do
-    {:reply, :ok, %{positions: ExchangePositions.new(),
-                    timestamp: DateTime.from_unix!(0)}}
+    {:reply, :ok, %{positions: ExchangePositions.new(), timestamp: DateTime.from_unix!(0)}}
   end
 
   @impl true
   def handle_call({:load_stocks, stock_amounts}, _from, %{positions: positions} = state) do
     holdings =
-      for {ticker, amount} <- Enum.to_list(stock_amounts) do
-        ProductHolding.new(
-          product: Product.new(
-            product_type: :STONK,
-            product_name: ticker
-          ),
-          amount: "#{amount}"
-        )
+      for {name, amount} <- Enum.to_list(stock_amounts) do
+        case name do
+          "USD" ->
+            ProductHolding.new(
+              product:
+                Product.new(
+                  product_type: :CURRENCY,
+                  product_name: name
+                ),
+              amount: "#{amount}"
+            )
+
+          ticker ->
+            ProductHolding.new(
+              product:
+                Product.new(
+                  product_type: :STONK,
+                  product_name: ticker
+                ),
+              amount: "#{amount}"
+            )
+        end
       end
 
-    positions = %ExchangePositions{positions| holdings: holdings}
+    positions = %ExchangePositions{positions | holdings: holdings}
     {:reply, :ok, %{state | positions: positions}}
   end
 
@@ -71,6 +89,11 @@ defmodule Trader.Alpaca.MockAlpaca do
 
   @impl true
   def handle_call({:current_price, ticker}, _from, %{timestamp: timestamp} = state) do
-    {:reply, Db.DataPoints.get_price_at_time(:STONK_AGGREGATE, "#{ticker}-#{@aggregate_width}", timestamp), state}
+    {:reply,
+     Db.DataPoints.get_price_at_time(
+       :STONK_AGGREGATE,
+       "#{ticker}-#{@aggregate_width}",
+       timestamp
+     ), state}
   end
 end

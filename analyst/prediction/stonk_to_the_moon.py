@@ -29,7 +29,7 @@ class StonkToTheMoonModel(PricePredictionModel):
         result = Prediction()
         label = result.labels.add()
         label.event_timestamp = target_timestamp
-        label.value_decimal = "10000000"
+        label.value_decimal = "0"
         label.label_config.label_type = LabelType.STONK_PRICE
         label.label_config.stonk_price_config.ticker = self.ticker_
         return result
