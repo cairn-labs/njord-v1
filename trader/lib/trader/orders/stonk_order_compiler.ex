@@ -20,6 +20,11 @@ defmodule Trader.Orders.StonkOrderCompiler do
   @minimum_down_percentage_to_sell -0.025
   @minimum_up_percentage_to_buy 0.025
 
+  # When setting up a buy order that is contingent on a pending sell order,
+  # assume that the sell order will fill within this percentage of current
+  # market price, for the purposes of allocating capital.
+  @sell_order_assumed_liquidity 0.95
+
   def get_orders(
         %ExchangePositions{} = current_positions,
         prices,
@@ -28,7 +33,23 @@ defmodule Trader.Orders.StonkOrderCompiler do
     down_prediction_sell_orders =
       get_down_prediction_sell_orders(current_positions, prices, labels)
 
-    OrderTree.new(orders: down_prediction_sell_orders)
+    if not any_up_predictions?(prices, labels) do
+      OrderTree.new(orders: down_prediction_sell_orders)
+    else
+      no_prediction_sell_orders = get_no_prediction_sell_orders(current_positions, prices, labels)
+
+      buy_orders =
+        get_buy_orders(
+          current_positions,
+          prices,
+          labels,
+          down_prediction_sell_orders ++ no_prediction_sell_orders
+        )
+
+      OrderTree.new(
+        orders: down_prediction_sell_orders ++ no_prediction_sell_orders ++ buy_orders
+      )
+    end
   end
 
   defp get_down_prediction_sell_orders(
@@ -36,22 +57,9 @@ defmodule Trader.Orders.StonkOrderCompiler do
          prices,
          labels
        ) do
-    labels
-    |> Enum.map(fn label ->
-      {label.label_config.stonk_price_config.ticker, PriceUtil.as_float(label.value_decimal)}
-    end)
-    |> Enum.map(fn {ticker, predicted_price} ->
-      {ticker, predicted_price, Map.get(prices, ticker)}
-    end)
-    |> Enum.filter(fn
-      {_, _, 0} -> false
-      {_, _, nil} -> false
-      _ -> true
-    end)
-    |> Enum.filter(fn {_, predicted, current} ->
-      (predicted - current) / current < @minimum_down_percentage_to_sell
-    end)
-    |> Enum.map(fn {ticker, _, _} -> ticker end)
+    label_deltas(prices, labels)
+    |> Enum.filter(fn {_, delta} -> delta < @minimum_down_percentage_to_sell end)
+    |> Enum.map(fn {ticker, _} -> ticker end)
     |> Enum.into(MapSet.new())
     |> sell_all(current_positions)
   end
@@ -98,5 +106,154 @@ defmodule Trader.Orders.StonkOrderCompiler do
       end)
 
     cancellations ++ sells
+  end
+
+  def any_up_predictions?(prices, labels) do
+    case Enum.filter(
+           label_deltas(prices, labels),
+           fn {_, delta} -> delta >= @minimum_up_percentage_to_buy end
+         ) do
+      [] -> false
+      _ -> true
+    end
+  end
+
+  def label_deltas(prices, labels) do
+    labels
+    |> Enum.map(fn label ->
+      {label.label_config.stonk_price_config.ticker, PriceUtil.as_float(label.value_decimal)}
+    end)
+    |> Enum.map(fn {ticker, predicted_price} ->
+      {ticker, predicted_price, Map.get(prices, ticker)}
+    end)
+    |> Enum.filter(fn
+      {_, _, 0} -> false
+      {_, _, nil} -> false
+      _ -> true
+    end)
+    |> Enum.map(fn {ticker, predicted, current} ->
+      {ticker, (predicted - current) / current}
+    end)
+    |> Enum.into(%{})
+  end
+
+  def get_no_prediction_sell_orders(current_positions, prices, labels) do
+    tickers_to_ignore =
+      label_deltas(prices, labels)
+      |> Enum.filter(fn {_, delta} ->
+        delta < @minimum_down_percentage_to_sell or delta >= @minimum_up_percentage_to_buy
+      end)
+      |> Enum.map(fn {ticker, _} -> ticker end)
+      |> Enum.into(MapSet.new())
+
+    holdings_to_sell =
+      current_positions.holdings
+      |> Enum.filter(fn
+        %ProductHolding{product: %Product{product_type: :STONK, product_name: t}} ->
+          t not in tickers_to_ignore
+
+        _ ->
+          false
+      end)
+      |> Enum.map(fn %ProductHolding{product: %Product{product_name: t}} -> t end)
+
+    orders_to_cancel =
+      current_positions.orders
+      |> Enum.filter(fn
+        %Order{status: :PLACED, buy_product: b, sell_product: s} ->
+          not (b in tickers_to_ignore or s in tickers_to_ignore)
+
+        _ ->
+          false
+      end)
+      |> Enum.flat_map(fn %Order{status: :PLACED, buy_product: b, sell_product: s} -> [b, s] end)
+
+    (holdings_to_sell ++ orders_to_cancel)
+    |> Enum.into(MapSet.new())
+    |> sell_all(current_positions)
+  end
+
+  def get_buy_orders(
+        %ExchangePositions{holdings: holdings, orders: orders} = current_positions,
+        prices,
+        labels,
+        draft_sell_orders
+      ) do
+    cash_holding =
+      Enum.find(
+        holdings,
+        fn
+          %ProductHolding{product: %Product{product_type: :CURRENCY, product_name: "USD"}} -> true
+          _ -> false
+        end
+      )
+
+    available_cash =
+      case cash_holding do
+        %ProductHolding{amount: amount_str} -> PriceUtil.as_float(amount_str)
+        _ -> 0
+      end
+
+    pending_sell_amount =
+      draft_sell_orders
+      |> Enum.map(fn order -> get_order_presumed_liquidity(order, prices) end)
+      |> Enum.sum()
+
+    buy_ticker_deltas =
+      label_deltas(prices, labels)
+      |> Enum.filter(fn {_, delta} -> delta > @minimum_up_percentage_to_buy end)
+
+    total_weight = buy_ticker_deltas |> Enum.map(fn {_, delta} -> delta end) |> Enum.sum()
+
+    sell_order_ids = for %Order{id: i} <- draft_sell_orders, do: i
+
+    buy_ticker_deltas
+    |> Enum.map(fn {ticker, delta} ->
+      {ticker,
+       floor(
+         (available_cash + pending_sell_amount) * delta / total_weight / Map.get(prices, ticker)
+       )}
+    end)
+    |> Enum.map(fn {ticker, amount_to_buy} ->
+      Order.new(
+        id: UUID.uuid4(),
+        order_type: :MARKET_BUY,
+        amount: "#{amount_to_buy}",
+        sell_product:
+          Product.new(
+            product_type: :STONK,
+            product_name: ticker
+          ),
+        status: :DRAFT,
+        parent_order_ids: sell_order_ids
+      )
+    end)
+  end
+
+  defp get_order_presumed_liquidity(
+         %Order{
+           order_type: :MARKET_SELL,
+           sell_product: %Product{product_name: ticker},
+           amount: amount_str
+         },
+         prices
+       ) do
+    @sell_order_assumed_liquidity * Map.get(prices, ticker, 0) * PriceUtil.as_float(amount_str)
+  end
+
+  defp get_order_presumed_liquidity(
+         %Order{
+           order_type: :LIMIT_SELL,
+           sell_product: %Product{product_name: ticker},
+           price: price_str,
+           amount: amount_str
+         },
+         prices
+       ) do
+    PriceUtil.as_float(price_str) * PriceUtil.as_float(amount_str)
+  end
+
+  defp get_order_presumed_liquidity(_, _) do
+    0
   end
 end
