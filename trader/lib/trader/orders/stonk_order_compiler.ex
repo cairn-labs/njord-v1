@@ -219,7 +219,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
         id: UUID.uuid4(),
         order_type: :MARKET_BUY,
         amount: "#{amount_to_buy}",
-        sell_product:
+        buy_product:
           Product.new(
             product_type: :STONK,
             product_name: ticker

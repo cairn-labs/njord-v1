@@ -2,6 +2,7 @@ defmodule Trader.Alpaca.MockAlpaca do
   require Logger
   use GenServer
   alias Trader.Db
+  alias Trader.PriceUtil
 
   @aggregate_width 20
 
@@ -26,9 +27,16 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:set_timestamp, timestamp})
   end
 
-  def execute_order_tree(%OrderTree{} = order_tree) do
-    Logger.info("Executing orders: #{inspect(order_tree)}")
-    :ok
+  def execute_order_tree(%OrderTree{orders: orders}) do
+    # Need to toposort these orders into stages. For now, just submit
+    # them sequentially.
+    for order <- orders do
+      submit_order(order)
+    end
+  end
+
+  def submit_order(%Order{} = order) do
+    GenServer.call(__MODULE__, {:submit_order, order})
   end
 
   ####################
@@ -95,5 +103,55 @@ defmodule Trader.Alpaca.MockAlpaca do
        "#{ticker}-#{@aggregate_width}",
        timestamp
      ), state}
+  end
+
+  @impl true
+  def handle_call(
+    {:submit_order,
+     %Order{order_type: :MARKET_SELL,
+            sell_product: %Product{
+              product_name: ticker
+            },
+            amount: amount_str
+     } = order},
+    _from,
+    %{positions: %ExchangePositions{holdings: holdings},
+      timestamp: timestamp} = state) do
+
+    price = Db.DataPoints.get_price_at_time(
+      :STONK_AGGREGATE,
+      "#{ticker}-#{@aggregate_width}",
+      timestamp
+    )
+
+    holdings =
+      holdings
+      |> Enum.map(fn holding -> update_cash_holding(holding, PriceUtil.as_float(amount_str) * price) end)
+
+    Logger.info("Sell order: #{inspect order}")
+    Logger.info("holdings #{inspect holdings}")
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:submit_order, %Order{order_type: :MARKET_BUY} = order}, _from, state) do
+    Logger.info("Buy order: #{inspect order}")
+    {:reply, :ok, state}
+  end
+
+  ###################
+  # Private Methods #
+  ###################
+
+  def update_cash_holding(
+    %ProductHolding{product: %Product{product_type: :CURRENCY, product_name: "USD"},
+                    amount: amount_str} = holding,
+    delta) do
+    new = %ProductHolding{holding | amount: "#{PriceUtil.as_float(amount_str) + delta}"}
+    Logger.info("New: #{inspect new}")
+    new
+  end
+  def update_cash_holding(holding, _) do
+    holding
   end
 end
