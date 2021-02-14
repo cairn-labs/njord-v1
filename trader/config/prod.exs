@@ -21,9 +21,9 @@ config :logger, level: :debug
 
 
 config :trader, Trader.Repo,
-  username: "trader_dev",
-  password: System.get_env("DB_PASSWORD"),
-  database: "trader_dev",
+  username: "trader_prod",
+  password: System.get_env("TRADER_DB_PASSWORD"),
+  database: "trader_prod",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: false,
   pool_size: 20,
