@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Trader.Backtest do
     Logger.info("Running backtest from #{start_timestamp} to #{end_timestamp}...")
 
     BacktestRunner.load(strategies_dir)
-    BacktestRunner.set_positions(%{"AAPL" => 1000, "USD" => 1000})
+    BacktestRunner.set_positions(%{"AAPL" => 100, "USD" => 1000})
     BacktestRunner.run(start_timestamp, end_timestamp)
   end
 end

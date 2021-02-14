@@ -4,7 +4,7 @@ defmodule Trader.Runners.BacktestRunner do
   alias Trader.Db
   alias Trader.Alpaca.MockAlpaca
 
-  @prediction_timeout 30_000
+  @prediction_timeout 120_000
 
   ##########
   # Client #
@@ -29,6 +29,10 @@ defmodule Trader.Runners.BacktestRunner do
     {:ok, end_time, 0} = DateTime.from_iso8601(end_timestamp)
     tick_width = GenServer.call(__MODULE__, :get_tick_width)
 
+    MockAlpaca.set_timestamp(start_time)
+    portfolio_value = MockAlpaca.portfolio_value()
+    Logger.info("Start portfolio value: $#{portfolio_value}")
+
     Stream.unfold(start_time, fn date ->
       case DateTime.compare(date, end_time) do
         :gt -> nil
@@ -42,6 +46,8 @@ defmodule Trader.Runners.BacktestRunner do
         @prediction_timeout
       )
     end)
+
+    Logger.info("End portfolio value: $#{MockAlpaca.portfolio_value()}")
   end
 
   ####################
@@ -92,9 +98,11 @@ defmodule Trader.Runners.BacktestRunner do
                        prediction_model_config: prediction_config,
                        name: strategy_name
                      } ->
-        %Prediction{Trader.Analyst.predict_price(window_start, prediction_config)
-                    | strategy_name: strategy_name}
-    end)
+        %Prediction{
+          Trader.Analyst.predict_price(window_start, prediction_config)
+          | strategy_name: strategy_name
+        }
+      end)
       |> Enum.each(fn p -> Trader.Orders.OrderCreation.submit_orders(p, :backtest) end)
 
     {:reply, :ok, state}

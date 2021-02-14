@@ -19,7 +19,7 @@ defmodule Trader.Orders.OrderCreation do
     stonk_labels = Map.get(labels_by_type, :STONK_PRICE, [])
     fx_rate_labels = Map.get(labels_by_type, :FX_RATE, [])
 
-    Logger.info(
+    Logger.debug(
       "Received prediction from #{strategy_name} with " <>
         "#{length(stonk_labels)} stonk price predictions and " <>
         "#{length(fx_rate_labels)} FX rate predictions."

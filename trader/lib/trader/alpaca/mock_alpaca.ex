@@ -39,6 +39,10 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:submit_order, order})
   end
 
+  def portfolio_value() do
+    GenServer.call(__MODULE__, :portfolio_value)
+  end
+
   ####################
   # Server Callbacks #
   ####################
@@ -87,6 +91,28 @@ defmodule Trader.Alpaca.MockAlpaca do
   @impl true
   def handle_call(:current_positions, _from, %{positions: positions} = state) do
     {:reply, positions, state}
+  end
+
+  @impl true
+  def handle_call(:portfolio_value, _from, %{positions: positions, timestamp: timestamp} = state) do
+    total_value_usd =
+      positions.holdings
+      |> Enum.map(fn
+        %ProductHolding{
+          product: %Product{product_type: :CURRENCY, product_name: "USD"},
+          amount: amount_str
+        } ->
+          PriceUtil.as_float(amount_str)
+
+        %ProductHolding{
+          product: %Product{product_type: :STONK, product_name: ticker},
+          amount: amount_str
+        } ->
+          PriceUtil.as_float(amount_str) * get_price(ticker, timestamp)
+      end)
+      |> Enum.sum()
+
+    {:reply, total_value_usd, state}
   end
 
   @impl true
