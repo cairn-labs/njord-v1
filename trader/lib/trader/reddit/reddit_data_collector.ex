@@ -98,7 +98,7 @@ defmodule Trader.Reddit.RedditDataCollector do
     |> Db.DataPoints.insert_datapoint()
   end
 
-  defp post_to_proto(%{
+  defp post_to_proto(%{"data" => %{
          "title" => title,
          "selftext" => text,
          "permalink" => permalink,
@@ -106,7 +106,7 @@ defmodule Trader.Reddit.RedditDataCollector do
          "ups" => upvotes,
          "upvote_ratio" => upvote_ratio,
          "created_utc" => created_utc
-       }) do
+       }}) do
     [
       RedditPost.new(
         title: title,
@@ -115,12 +115,12 @@ defmodule Trader.Reddit.RedditDataCollector do
         url: url,
         upvotes: upvotes,
         upvote_ratio: upvote_ratio,
-        created_utc: created_utc
+        created_utc: round(created_utc)
       )
     ]
   end
 
-  defp post_to_proto(_) do
+  defp post_to_proto(x) do
     []
   end
 
