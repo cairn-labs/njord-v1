@@ -195,10 +195,10 @@ defmodule Trader.Reddit.RedditDataCollector do
 
   defp queue_next_tick(pid) do
     calls_per_minute = Application.get_env(:trader, __MODULE__)[:max_calls_per_minute]
-    delay = min(
+    delay = max(
       round(60_000 / (calls_per_minute / (@links_per_call * length(@subreddits)))),
       @min_timeout_between_calls_ms * @links_per_call * (length(@subreddits) + 1)
-      )
+    )
 
     Logger.info("Delay is #{delay}")
     # spawn(fn -> Process.send_after(pid, :tick, delay) end)
