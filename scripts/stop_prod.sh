@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pkill -f run_trader
+pkill -f phx.server
