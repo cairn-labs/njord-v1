@@ -158,7 +158,6 @@ defmodule Trader.Reddit.RedditDataCollector do
   end
 
   defp add_comments(%RedditPost{id: id} = post, subreddit, token) do
-    Logger.info("Fetching comments for t3_#{id}")
     :timer.sleep(@min_timeout_between_calls_ms)
 
     headers = [
