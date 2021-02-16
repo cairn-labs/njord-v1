@@ -63,8 +63,9 @@ config :trader, Trader.Alpaca.AlpacaApi,
   trading_api_url: "https://paper-api.alpaca.markets",
   data_api_url: "https://data.alpaca.markets"
 
+# This is not reliable, so turning it off for now.
 config :trader, Trader.Alpaca.AlpacaDataCollector,
-  enable: true,
+  enable: false,
   milliseconds_per_tick: 60_000
 
 # Import environment specific config. This must remain at the bottom
