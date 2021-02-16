@@ -9,7 +9,7 @@ defmodule Trader.Frames.LabelExtraction do
       ) do
     selector = Trader.Selectors.from_label_config(label_config)
 
-    case Db.DataPoints.get_data_at_time(label_timestamp, :L2_ORDER_BOOK, selector) do
+    case Db.DataPoints.get_data_after_time(label_timestamp, :L2_ORDER_BOOK, selector) do
       %DataPoint{data_point_type: :L2_ORDER_BOOK, l2_order_book: order_book, event_timestamp: ts} ->
         Label.new(event_timestamp: ts, value_decimal: PriceUtil.price_from_order_book(order_book))
 

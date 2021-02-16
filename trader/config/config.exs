@@ -55,7 +55,7 @@ config :trader, Trader.Reddit.RedditDataCollector,
   api_id: System.get_env("REDDIT_API_ID"),
   api_user: System.get_env("REDDIT_API_USER"),
   api_password: System.get_env("REDDIT_API_PASSWORD"),
-  max_calls_per_minute: 30
+  max_calls_per_minute: 15
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

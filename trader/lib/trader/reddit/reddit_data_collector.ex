@@ -15,6 +15,8 @@ defmodule Trader.Reddit.RedditDataCollector do
     "cryptocurrency"
   ]
   @user_agent "TendiesAi/0.1 by samelaaaa"
+  @links_per_call 25
+  @min_timeout_between_calls_ms 4_000
 
   ##########
   # Client #
@@ -83,8 +85,8 @@ defmodule Trader.Reddit.RedditDataCollector do
     ]
 
     {:ok, %HTTPoison.Response{body: response}} =
-      HTTPoison.get(
-        @api_base_url <> "/r/#{subreddit}/hot",
+      get_with_retry(
+        @api_base_url <> "/r/#{subreddit}/hot?limit=#{@links_per_call}",
         headers
       )
 
@@ -94,6 +96,7 @@ defmodule Trader.Reddit.RedditDataCollector do
 
     posts
     |> Enum.flat_map(&post_to_proto/1)
+    |> Enum.map(fn post -> add_comments(post, subreddit, token) end)
     |> create_datapoint(subreddit)
     |> Db.DataPoints.insert_datapoint()
   end
@@ -101,27 +104,82 @@ defmodule Trader.Reddit.RedditDataCollector do
   defp post_to_proto(%{"data" => %{
          "title" => title,
          "selftext" => text,
+         "author" => author,
          "permalink" => permalink,
          "url" => url,
          "ups" => upvotes,
          "upvote_ratio" => upvote_ratio,
-         "created_utc" => created_utc
-       }}) do
+         "created_utc" => created_utc,
+         "id" => id
+       } = data}) do
     [
       RedditPost.new(
         title: title,
         permalink: permalink,
         text: text,
         url: url,
+        author: author,
         upvotes: upvotes,
         upvote_ratio: upvote_ratio,
-        created_utc: round(created_utc)
+        created_utc: round(created_utc),
+        id: id
       )
     ]
   end
 
   defp post_to_proto(x) do
+    Logger.warn("Reddit post in incorrect format; skipping...")
     []
+  end
+
+  defp comment_to_proto(%{
+        "id" => id,
+        "ups" => ups,
+        "downs" => downs,
+        "created_utc" => created_utc,
+        "author" => username,
+        "body" => content,
+        "parent_id" => parent_id
+                        }) do
+    [RedditComment.new(
+        id: id,
+        username: username,
+        content: content,
+        created_utc: round(created_utc),
+        parent_id: parent_id,
+        upvotes: ups,
+        downvotes: downs
+    )]
+  end
+
+  defp comment_to_proto(_) do
+    Logger.warn("Reddit comment in incorrect format; skipping...")
+    []
+  end
+
+  defp add_comments(%RedditPost{id: id} = post, subreddit, token) do
+    Logger.info("Fetching comments for t3_#{id}")
+    :timer.sleep(@min_timeout_between_calls_ms)
+
+    headers = [
+      {"User-Agent", @user_agent},
+      {"Authorization", "bearer #{token}"}
+    ]
+
+    {:ok, %HTTPoison.Response{body: response}} =
+      get_with_retry(
+        @api_base_url <> "/r/#{subreddit}/comments?article=t3_#{id}&depth=2&limit=50",
+        headers
+      )
+
+    comments =
+      response
+      |> Jason.decode!
+      |> Map.get("data", %{})
+      |> Map.get("children", [])
+      |> Enum.flat_map(fn %{"data" => data} -> comment_to_proto(data) end)
+
+    %RedditPost{post | comments: comments}
   end
 
   defp create_datapoint(posts, subreddit_name) do
@@ -138,7 +196,26 @@ defmodule Trader.Reddit.RedditDataCollector do
 
   defp queue_next_tick(pid) do
     calls_per_minute = Application.get_env(:trader, __MODULE__)[:max_calls_per_minute]
-    delay = round(60_000 / (calls_per_minute / length(@subreddits)))
-    spawn(fn -> Process.send_after(pid, :tick, delay) end)
+    delay = min(
+      round(60_000 / (calls_per_minute / (@links_per_call * length(@subreddits)))),
+      @min_timeout_between_calls_ms * @links_per_call * (length(@subreddits) + 1)
+      )
+
+    Logger.info("Delay is #{delay}")
+    # spawn(fn -> Process.send_after(pid, :tick, delay) end)
+  end
+
+  def get_with_retry(url, headers) do
+    get_with_retry(url, headers, 0)
+  end
+
+  def get_with_retry(url, headers, delay_ms) do
+    :timer.sleep(delay_ms)
+    case HTTPoison.get(url, headers) do
+      {:ok, %HTTPoison.Response{} = response} -> {:ok, response}
+      _ ->
+        Logger.warn("Reddit API call failed, retrying in #{delay_ms + 10_000} ms")
+        get_with_retry(url, headers, delay_ms + 10_000)
+    end
   end
 end

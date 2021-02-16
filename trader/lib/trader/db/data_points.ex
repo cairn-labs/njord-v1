@@ -128,7 +128,7 @@ defmodule Trader.Db.DataPoints do
     |> Enum.map(fn [_ts, value] -> value end)
   end
 
-  def get_data_at_time(timestamp, data_point_type, selector) do
+  def get_data_at_time(timestamp, data_point_type, selector, before_or_after) do
     type = DataPointType.mapping()[data_point_type]
 
     {selector_expr, selector_value} =
@@ -137,13 +137,24 @@ defmodule Trader.Db.DataPoints do
         _ -> {"AND selector = $3", [selector]}
       end
 
-    query =
-      "select contents from data where time > $1 AND data_type = $2 #{selector_expr} ORDER BY time asc LIMIT 1;"
+    query = case before_or_after do
+              :after -> "select contents from data where time > $1 AND data_type = $2 #{selector_expr} ORDER BY time asc LIMIT 1;"
+              :before -> "select contents from data where time < $1 AND data_type = $2 #{selector_expr} ORDER BY time desc LIMIT 1;"
+            end
+
 
     case SQL.query(Repo, query, [timestamp, type] ++ selector_value) do
       {:ok, %{rows: []}} -> nil
       {:ok, %{rows: [[contents]]}} -> DataPoint.decode(contents)
     end
+  end
+
+  def get_data_before_time(timestamp, data_point_type, selector) do
+    get_data_at_time(timestamp, data_point_type, selector, :before)
+  end
+
+  def get_data_after_time(timestamp, data_point_type, selector) do
+    get_data_at_time(timestamp, data_point_type, selector, :after)
   end
 
   def update_selector(datapoint_id, selector) do
