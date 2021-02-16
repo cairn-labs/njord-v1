@@ -199,9 +199,7 @@ defmodule Trader.Reddit.RedditDataCollector do
       round(60_000 / (calls_per_minute / (@links_per_call * length(@subreddits)))),
       @min_timeout_between_calls_ms * @links_per_call * (length(@subreddits) + 1)
     )
-
-    Logger.info("Delay is #{delay}")
-    # spawn(fn -> Process.send_after(pid, :tick, delay) end)
+    spawn(fn -> Process.send_after(pid, :tick, delay) end)
   end
 
   def get_with_retry(url, headers) do
