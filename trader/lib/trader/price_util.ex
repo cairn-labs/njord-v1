@@ -8,8 +8,16 @@ defmodule Trader.PriceUtil do
   def price_from_data_point(%DataPoint{
         data_point_type: :STONK_AGGREGATE,
         stonk_aggregate: %StonkAggregate{vwap: vwap}
-      }) do
+      })
+      when vwap != 0 do
     vwap
+  end
+
+  def price_from_data_point(%DataPoint{
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate: %StonkAggregate{open_price: o, close_price: c}
+      }) do
+    0.5 * (o + c)
   end
 
   def price_from_data_point(_) do

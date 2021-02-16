@@ -9,9 +9,10 @@ defmodule Mix.Tasks.Trader.Custom do
 
   def run(argv) do
     {:ok, _} = Application.ensure_all_started(:trader)
-    data = Db.DataPoints.get_data_before_time(DateTime.utc_now(), :SUBREDDIT_TOP_LISTING, "wallstreetbets")
-    |> inspect
-    |> Logger.info
 
+    data =
+      Db.DataPoints.get_data_before_time(DateTime.utc_now(), :STONK_AGGREGATE, "SPY-1")
+      |> inspect
+      |> Logger.info()
   end
 end

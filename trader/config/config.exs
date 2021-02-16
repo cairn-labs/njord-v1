@@ -57,6 +57,16 @@ config :trader, Trader.Reddit.RedditDataCollector,
   api_password: System.get_env("REDDIT_API_PASSWORD"),
   max_calls_per_minute: 15
 
+config :trader, Trader.Alpaca.AlpacaApi,
+  api_key: System.get_env("ALPACA_PAPER_API_KEY_ID"),
+  api_secret: System.get_env("ALPACA_PAPER_API_SECRET"),
+  trading_api_url: "https://paper-api.alpaca.markets",
+  data_api_url: "https://data.alpaca.markets"
+
+config :trader, Trader.Alpaca.AlpacaDataCollector,
+  enable: true,
+  milliseconds_per_tick: 60_000
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

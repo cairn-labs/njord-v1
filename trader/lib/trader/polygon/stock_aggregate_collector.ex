@@ -32,7 +32,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
       queue_next_tick(self())
     end
 
-    {:ok, %{all_products: Cache.cached("all-tickers", 604_800, &get_all_tickers/0)}}
+    {:ok, %{all_products: []}}
   end
 
   @impl true
