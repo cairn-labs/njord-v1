@@ -58,7 +58,7 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
   defp bar_to_datapoint(ticker, [%{"c" => c, "h" => h, "l" => l, "o" => o, "t" => t, "v" => v}]) do
     [
       DataPoint.new(
-        event_timestamp: t * 1000,
+        event_timestamp: t * 1_000_000,
         data_point_type: :STONK_AGGREGATE,
         stonk_aggregate:
           StonkAggregate.new(
