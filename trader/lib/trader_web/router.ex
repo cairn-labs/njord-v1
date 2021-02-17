@@ -9,6 +9,7 @@ defmodule TraderWeb.Router do
     pipe_through(:api)
 
     get("/", IndexController, :index)
+    get("/status", StatusController, :get_status)
   end
 
   scope "/api", TraderWeb do

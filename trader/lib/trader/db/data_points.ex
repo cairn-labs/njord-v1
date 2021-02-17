@@ -31,11 +31,10 @@ defmodule Trader.Db.DataPoints do
     selector = Trader.Selectors.from_data_point(datapoint)
 
     case SQL.query(
-          Repo,
-          "SELECT id FROM data WHERE data_type = $1 AND selector = $2;",
-          [type, selector]
-        ) do
-
+           Repo,
+           "SELECT id FROM data WHERE data_type = $1 AND selector = $2;",
+           [type, selector]
+         ) do
       {:ok, %{rows: []}} ->
         insert_datapoint(datapoint)
 
@@ -47,10 +46,11 @@ defmodule Trader.Db.DataPoints do
   def get_price_at_time(data_point_type, selector, timestamp) do
     type = DataPointType.mapping()[data_point_type]
 
-    case SQL.query(Repo,
-          "select price from data where data_type = $1 and selector = $2 and time < $3 ORDER BY time DESC LIMIT 1;",
-          [type, selector, timestamp]
-        ) do
+    case SQL.query(
+           Repo,
+           "select price from data where data_type = $1 and selector = $2 and time < $3 ORDER BY time DESC LIMIT 1;",
+           [type, selector, timestamp]
+         ) do
       {:ok, %{rows: []}} -> nil
       {:ok, %{rows: [[price]]}} -> price
     end
@@ -137,11 +137,14 @@ defmodule Trader.Db.DataPoints do
         _ -> {"AND selector = $3", [selector]}
       end
 
-    query = case before_or_after do
-              :after -> "select contents from data where time > $1 AND data_type = $2 #{selector_expr} ORDER BY time asc LIMIT 1;"
-              :before -> "select contents from data where time < $1 AND data_type = $2 #{selector_expr} ORDER BY time desc LIMIT 1;"
-            end
+    query =
+      case before_or_after do
+        :after ->
+          "select contents from data where time > $1 AND data_type = $2 #{selector_expr} ORDER BY time asc LIMIT 1;"
 
+        :before ->
+          "select contents from data where time < $1 AND data_type = $2 #{selector_expr} ORDER BY time desc LIMIT 1;"
+      end
 
     case SQL.query(Repo, query, [timestamp, type] ++ selector_value) do
       {:ok, %{rows: []}} -> nil
@@ -206,5 +209,16 @@ defmodule Trader.Db.DataPoints do
 
     rows
     |> Enum.map(fn [ts, _, _] -> ts end)
+  end
+
+  def counts_by_type_in_window(start_datetime, end_datetime) do
+    query =
+      "select data_type, count(*) from data where time > $1 and time <= $2 group by data_type"
+
+    {:ok, %{rows: rows}} = SQL.query(Repo, query, [start_datetime, end_datetime])
+
+    rows
+    |> Enum.map(fn [data_type, count] -> {DataPointType.key(data_type), count} end)
+    |> Enum.into(%{})
   end
 end

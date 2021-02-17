@@ -31,6 +31,8 @@ config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
 config :trader, Trader.Reddit.RedditDataCollector, enable: false
 
+config :trader, Trader.Reddit.AlpacaDataCollector, enable: false
+
 # Do not include metadata nor timestamps in development logs
 config :logger,
   format: "[$level] $message\n",
