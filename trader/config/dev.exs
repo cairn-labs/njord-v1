@@ -35,13 +35,13 @@ config :trader, TraderWeb.Endpoint,
     ]
   ]
 
-config :trader, Trader.Coinbase.L2DataCollector, enable: true
+config :trader, Trader.Coinbase.L2DataCollector, enable: false
 
-config :trader, Trader.Polygon.StockAggregateCollector, enable: true
+config :trader, Trader.Polygon.StockAggregateCollector, enable: false
 
-config :trader, Trader.Newsapi.NewsapiDataCollector, enable: true
+config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
-config :trader, Trader.Reddit.RedditDataCollector, enable: true
+config :trader, Trader.Reddit.RedditDataCollector, enable: false
 
 config :trader, Trader.Alpaca.AlpacaDataCollector, enable: false
 

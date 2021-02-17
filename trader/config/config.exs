@@ -64,8 +64,9 @@ config :trader, Trader.Alpaca.AlpacaApi,
   data_api_url: "https://data.alpaca.markets",
   data_websocket_url: "wss://data.alpaca.markets/stream"
 
-config :trader, Trader.Alpaca.AlpacaDataCollector,
-  enable: true
+config :trader, Trader.Alpaca.AlpacaDataCollector, enable: true
+
+config :trader, Trader.Runners.LiveRunner, enable: true
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

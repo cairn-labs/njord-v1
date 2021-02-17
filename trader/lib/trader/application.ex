@@ -16,7 +16,8 @@ defmodule Trader.Application do
       Trader.Polygon.StockAggregateCollector,
       Trader.Runners.BacktestRunner,
       Trader.Alpaca.MockAlpaca,
-      Trader.Alpaca.AlpacaDataCollector
+      Trader.Alpaca.AlpacaDataCollector,
+      Trader.Runners.LiveRunner
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
