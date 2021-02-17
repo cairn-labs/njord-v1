@@ -1,6 +1,7 @@
 defmodule Trader.Alpaca.AlpacaDataCollector do
   use WebSockex
   require Logger
+  alias Trader.Db
 
   def start_link([]) do
     if Application.get_env(:trader, __MODULE__)[:enable] do
@@ -72,6 +73,44 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
         }
       }) do
     Logger.info("Alpaca Websocket listening for 1-minute bars.")
+    :ok
+  end
+
+  def receive_message(%{"data" => %{"T" => ticker,
+                                    "c" => close_price,
+                                    "e" => ts_end,
+                                    "ev" => "AM",
+                                    "h" => high_price,
+                                    "l" => low_price,
+                                    "o" => open_price,
+                                    "s" => ts_start,
+                                    "v" => volume,
+                                    "vw" => vwap}, "stream" => _}) do
+    datapoint =
+      DataPoint.new(
+        event_timestamp: ts_end * 1000,
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate: StonkAggregate.new(
+          ticker: ticker,
+          open_price: open_price,
+          high_price: high_price,
+          low_price: low_price,
+          close_price: close_price,
+          volume: volume,
+          vwap: vwap,
+          ts: ts_start,
+          width_minutes: 1
+        )
+      )
+
+    # By default this special process silently ignores errors, don't do that.
+    try do
+      Db.DataPoints.insert_datapoint(datapoint)
+    rescue e ->
+      Logger.error(inspect(e))
+      raise e
+    end
+
     :ok
   end
 
