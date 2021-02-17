@@ -29,19 +29,6 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
     WebSockex.send_frame(pid, {:text, message})
   end
 
-  def listen(pid) do
-    message =
-      %{
-        "action" => "listen",
-        "data" => %{
-          "streams" => ["AM.*"]
-        }
-      }
-      |> Jason.encode!()
-
-    WebSockex.send_frame(pid, {:text, message})
-  end
-
   #############
   # Callbacks #
   #############
