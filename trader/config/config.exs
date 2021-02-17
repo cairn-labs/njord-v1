@@ -42,7 +42,7 @@ config :trader, Trader.Polygon.PolygonApi,
 
 config :trader, Trader.Polygon.StockAggregateCollector,
   enable: true,
-  milliseconds_per_tick: 10_000
+  milliseconds_per_tick: 60_000
 
 config :trader, Trader.Newsapi.NewsapiDataCollector,
   enable: true,
@@ -61,12 +61,11 @@ config :trader, Trader.Alpaca.AlpacaApi,
   api_key: System.get_env("ALPACA_PAPER_API_KEY_ID"),
   api_secret: System.get_env("ALPACA_PAPER_API_SECRET"),
   trading_api_url: "https://paper-api.alpaca.markets",
-  data_api_url: "https://data.alpaca.markets"
+  data_api_url: "https://data.alpaca.markets",
+  data_websocket_url: "wss://data.alpaca.markets/stream"
 
-# This is not reliable, so turning it off for now.
 config :trader, Trader.Alpaca.AlpacaDataCollector,
-  enable: false,
-  milliseconds_per_tick: 60_000
+  enable: false
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

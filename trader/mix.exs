@@ -48,6 +48,7 @@ defmodule Trader.MixProject do
       {:decimal, "~> 1.0"},
       {:flow, "~> 1.0.0"},
       {:uuid, "~> 1.1"},
+      {:websockex, "~> 0.4.2"},
       {:hackney, github: "benoitc/hackney", override: true}
     ]
   end

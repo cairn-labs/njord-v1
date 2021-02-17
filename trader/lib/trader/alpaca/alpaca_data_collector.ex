@@ -1,99 +1,95 @@
 defmodule Trader.Alpaca.AlpacaDataCollector do
+  use WebSockex
   require Logger
-  use GenServer
-  alias Trader.Db
-  alias Trader.Alpaca.AlpacaApi, as: Api
-  alias Trader.DataCache, as: Cache
-
-  ##########
-  # Client #
-  ##########
 
   def start_link([]) do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+    if Application.get_env(:trader, __MODULE__)[:enable] do
+      url = Application.get_env(:trader, Trader.Alpaca.AlpacaApi)[:data_websocket_url]
+      {:ok, pid} = WebSockex.start_link(url, __MODULE__, :no_state)
+      subscribe(pid)
+      {:ok, pid}
+    else
+      :ignore
+    end
   end
 
-  ##########
-  # Server #
-  ##########
+  def subscribe(pid) do
+    config = Application.get_env(:trader, Trader.Alpaca.AlpacaApi)
 
-  @impl true
-  def init(_state) do
-    all_assets =
-      if Keyword.get(Application.get_env(:trader, __MODULE__), :enable, true) do
-        Logger.debug("Starting Alpaca DataCollector GenServer...")
-        data = Cache.cached("all-alpaca-assets", 86_400, &get_all_assets/0)
-        queue_next_tick(self())
-        data
-      else
-        []
-      end
+    message =
+      %{
+        "action" => "authenticate",
+        "data" => %{
+          key_id: config[:api_key],
+          secret_key: config[:api_secret]
+        }
+      }
+      |> Jason.encode!()
 
-    {:ok, %{all_assets: all_assets}}
+    WebSockex.send_frame(pid, {:text, message})
   end
 
-  @impl true
-  def handle_info(:tick, %{all_assets: all_assets} = state) do
-    all_assets
-    |> Enum.chunk_every(100)
-    |> Enum.map(&store_chunk_bars/1)
+  def listen(pid) do
+    message =
+      %{
+        "action" => "listen",
+        "data" => %{
+          "streams" => ["AM.*"]
+        }
+      }
+      |> Jason.encode!()
 
-    queue_next_tick(self())
-    {:noreply, state}
+    WebSockex.send_frame(pid, {:text, message})
   end
 
-  defp store_chunk_bars(assets) do
-    timestamp = DateTime.utc_now() |> DateTime.to_iso8601()
-    symbols = Enum.join(assets, ",")
+  #############
+  # Callbacks #
+  #############
 
-    {:ok, %HTTPoison.Response{body: body}} =
-      Api.call(:data, :GET, "v1/bars/minute?symbols=#{symbols}&limit=1&until=#{timestamp}")
-
-    body
-    |> Jason.decode!()
-    |> Enum.flat_map(fn {ticker, bar} -> bar_to_datapoint(ticker, bar) end)
-    |> Enum.each(&Db.DataPoints.insert_datapoint/1)
+  def handle_connect(conn, state) do
+    {:ok, state}
   end
 
-  defp bar_to_datapoint(ticker, [%{"c" => c, "h" => h, "l" => l, "o" => o, "t" => t, "v" => v}]) do
-    [
-      DataPoint.new(
-        event_timestamp: t * 1_000_000,
-        data_point_type: :STONK_AGGREGATE,
-        stonk_aggregate:
-          StonkAggregate.new(
-            ticker: ticker,
-            open_price: o,
-            high_price: h,
-            low_price: l,
-            close_price: c,
-            volume: v,
-            ts: t,
-            width_minutes: 1
-          )
-      )
-    ]
+  def handle_frame({:text, message}, state) do
+    reply =
+      message
+      |> Jason.decode!()
+      |> receive_message
+
+    case reply do
+      :ok -> {:ok, state}
+      frame -> {:reply, frame, state}
+    end
   end
 
-  defp bar_to_datapoint(ticker, malformed) do
-    Logger.warn("Malformed bar received for ticker #{ticker}: #{inspect(malformed)}")
-    []
+  def receive_message(%{
+        "data" => %{"action" => "authenticate", "status" => "authorized"},
+        "stream" => "authorization"
+      }) do
+    message =
+      %{
+        "action" => "listen",
+        "data" => %{
+          "streams" => ["AM.*"]
+        }
+      }
+      |> Jason.encode!()
+
+    {:text, message}
   end
 
-  defp queue_next_tick(pid) do
-    delay = Application.get_env(:trader, __MODULE__)[:milliseconds_per_tick]
-    spawn(fn -> Process.send_after(pid, :tick, delay) end)
+  def receive_message(%{
+        "stream" => "listening",
+        "data" => %{
+          "streams" => _
+        }
+      }) do
+    Logger.info("Alpaca Websocket listening for 1-minute bars.")
+    :ok
   end
 
-  defp get_all_assets() do
-    {:ok, %HTTPoison.Response{body: body}} = Api.call(:trading, :GET, "v2/assets?status=active")
-
-    body
-    |> Jason.decode!()
-    |> Enum.filter(fn
-      %{"tradable" => true} -> true
-      _ -> false
-    end)
-    |> Enum.map(fn %{"symbol" => s} -> s end)
+  def receive_message(message) do
+    Logger.warn("Alpaca Websocket received unknown message: #{inspect(message)}")
+    :ok
   end
 end
