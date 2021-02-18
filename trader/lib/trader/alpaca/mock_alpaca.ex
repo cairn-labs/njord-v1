@@ -4,7 +4,7 @@ defmodule Trader.Alpaca.MockAlpaca do
   alias Trader.Db
   alias Trader.PriceUtil
 
-  @aggregate_width 20
+  @aggregate_width 1
 
   def start_link([]) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)

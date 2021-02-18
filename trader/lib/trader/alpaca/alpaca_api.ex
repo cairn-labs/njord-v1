@@ -5,7 +5,7 @@ defmodule Trader.Alpaca.AlpacaApi do
     call(api, method, endpoint, "")
   end
 
-  defp call(api, method, endpoint, body) do
+  def call(api, method, endpoint, body) do
     config = Application.get_env(:trader, __MODULE__)
     api_key = config[:api_key]
     api_secret = config[:api_secret]
@@ -40,5 +40,14 @@ defmodule Trader.Alpaca.AlpacaApi do
       :POST -> HTTPoison.post(url, body_str, headers)
       :PUT -> HTTPoison.put(url, body_str, headers)
     end
+  end
+
+  def parse_response({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
+    Jason.decode!(body)
+  end
+
+  def parse_response(response) do
+    Logger.error("Invalid response from Alpaca: #{inspect(response)}")
+    :error
   end
 end

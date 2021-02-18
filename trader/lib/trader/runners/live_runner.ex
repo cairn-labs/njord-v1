@@ -36,7 +36,6 @@ defmodule Trader.Runners.LiveRunner do
       tick: 0
     }
 
-    Logger.info("strats: #{inspect(state)}")
     {:ok, state}
   end
 
@@ -50,8 +49,6 @@ defmodule Trader.Runners.LiveRunner do
         :tick,
         %{tick_width_ms: tick_width_ms, tick: tick, strategies: strategies} = state
       ) do
-    Logger.info("tick! #{tick * tick_width_ms}")
-
     strategies
     |> Enum.filter(fn %TradingStrategy{cadence_ms: cadence} ->
       rem(tick * tick_width_ms, cadence) == 0

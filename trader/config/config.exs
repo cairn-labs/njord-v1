@@ -68,6 +68,10 @@ config :trader, Trader.Alpaca.AlpacaDataCollector, enable: true
 
 config :trader, Trader.Runners.LiveRunner, enable: true
 
+config :trader, Trader.Alpaca.Alpaca,
+  enable: true,
+  milliseconds_per_tick: 2_000
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
