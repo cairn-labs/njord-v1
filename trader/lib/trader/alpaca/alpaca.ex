@@ -114,8 +114,8 @@ defmodule Trader.Alpaca.Alpaca do
       "Executing #{object[:type]} #{object[:side]} order for #{object[:qty]} #{object[:symbol]}"
     )
 
-    case Api.call(:trading, :POST, "v2/orders", object) do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
+    case Api.call(:trading, :POST, "v2/orders", object, retry: false) do
+      %HTTPoison.Response{status_code: 200} ->
         :ok
 
       other ->
@@ -135,7 +135,7 @@ defmodule Trader.Alpaca.Alpaca do
 
   def handle_info(:tick, %{pending_orders: pending_orders} = state) do
     filled =
-      Api.call(:trading, :GET, "v2/orders?status=all")
+      Api.call(:trading, :GET, "v2/orders?status=all", retry: true)
       |> Api.parse_response()
       |> Enum.filter(fn
         %{"status" => "filled"} -> true

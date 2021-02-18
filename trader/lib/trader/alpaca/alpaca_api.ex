@@ -1,11 +1,14 @@
 defmodule Trader.Alpaca.AlpacaApi do
   require Logger
 
-  def call(api, method, endpoint) do
-    call(api, method, endpoint, "")
+  @max_retries 5
+  @initial_retry_pause_ms 2000
+
+  def call(api, method, endpoint, opts \\ []) do
+    call(api, method, endpoint, "", opts)
   end
 
-  def call(api, method, endpoint, body) do
+  def call(api, method, endpoint, body, opts) do
     config = Application.get_env(:trader, __MODULE__)
     api_key = config[:api_key]
     api_secret = config[:api_secret]
@@ -35,14 +38,35 @@ defmodule Trader.Alpaca.AlpacaApi do
       {"Content-Type", "application/json"}
     ]
 
-    case method do
-      :GET -> HTTPoison.get(url, headers)
-      :POST -> HTTPoison.post(url, body_str, headers)
-      :PUT -> HTTPoison.put(url, body_str, headers)
+    request =
+      case method do
+        :GET -> fn -> HTTPoison.get(url, headers) end
+        :POST -> fn -> HTTPoison.post(url, body_str, headers) end
+        :PUT -> fn -> HTTPoison.put(url, body_str, headers) end
+      end
+
+    if Keyword.get(opts, :retry, false) do
+      retry_if_necessary(request, 0, @initial_retry_pause_ms)
+    else
+      {:ok, result} = request.()
+      result
     end
   end
 
-  def parse_response({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
+  defp retry_if_necessary(_, @max_retries, _) do
+    {:error, :too_many_failures}
+  end
+  defp retry_if_necessary(request, past_retries, current_sleep) do
+    case request.() do
+      {:ok, result} -> result
+      _ ->
+        :timer.sleep(current_sleep)
+        retry_if_necessary(request, past_retries + 1, current_sleep * 2)
+    end
+  end
+
+
+  def parse_response(%HTTPoison.Response{body: body, status_code: 200}) do
     Jason.decode!(body)
   end
 
