@@ -26,8 +26,7 @@ defmodule Trader.Runners.LiveRunner do
 
   @impl true
   def init(_state) do
-    strategies = read_strategies()
-    check_strategies(strategies)
+    strategies = Trader.Strategies.active_strategies()
     tick_width_ms = get_overall_tick_width(strategies)
 
     state = %{
@@ -75,26 +74,6 @@ defmodule Trader.Runners.LiveRunner do
   ###################
   # Private Methods #
   ###################
-  defp read_strategies() do
-    Application.app_dir(:trader, "priv")
-    |> Path.join("active_strategies")
-    |> Path.join("*.pb.txt")
-    |> Path.wildcard()
-    |> Enum.map(fn p ->
-      Trader.ProtoUtil.parse_text_format(p, TradingStrategy, "trading_strategy.proto")
-    end)
-  end
-
-  defp check_strategies(strategies) do
-    total_allocation =
-      strategies
-      |> Enum.map(fn %TradingStrategy{capital_allocation: c} -> c end)
-      |> Enum.sum()
-
-    if total_allocation > 1.0 do
-      raise "Total capital allocation of all strategies must be at most 1"
-    end
-  end
 
   defp get_overall_tick_width([]) do
     nil

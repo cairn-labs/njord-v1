@@ -67,6 +67,10 @@ defmodule Trader.Alpaca.Alpaca do
     ExchangePositions.new(holdings: holdings)
   end
 
+  def current_positions(strategy_name) do
+    GenServer.call(__MODULE__, {:get_strategy_positions, strategy_name})
+  end
+
   def order_request_object(
         %Order{
           id: order_id,
@@ -130,7 +134,18 @@ defmodule Trader.Alpaca.Alpaca do
 
   @impl true
   def init(_state) do
-    {:ok, %{pending_orders: []}}
+    Logger.info("Cancelling all existing orders on Alpaca. Allocating initial positions:")
+    %HTTPoison.Response{status_code: 207} = Api.call(:trading, :DELETE, "v2/orders", retry: true)
+    exchange_positions = %ExchangePositions{holdings: holdings} = current_positions()
+    strategy_positions = allocate_holdings_to_active_strategies(holdings)
+
+    Trader.ExchangeUtil.print_positions("Exchange positions:", exchange_positions)
+
+    for {name, positions} <- strategy_positions do
+      Trader.ExchangeUtil.print_positions("Strategy #{name}:", positions)
+    end
+
+    {:ok, %{pending_orders: [], strategy_positions: strategy_positions}}
   end
 
   def handle_info(:tick, %{pending_orders: pending_orders} = state) do
@@ -197,5 +212,26 @@ defmodule Trader.Alpaca.Alpaca do
        state
        | pending_orders: pending_orders ++ accepted_dependent_orders
      }}
+  end
+
+  def handle_call(
+        {:get_strategy_positions, strategy_name},
+        _from,
+        %{strategy_positions: strategy_positions} = state
+      ) do
+    {:reply, Map.get(strategy_positions, strategy_name), state}
+  end
+
+  def allocate_holdings_to_active_strategies(holdings) do
+    for %TradingStrategy{name: strategy_name, capital_allocation: allocation} <-
+          Trader.Strategies.active_strategies() do
+      strategy_holdings =
+        Enum.map(holdings, fn %ProductHolding{amount: qty} = holding ->
+          %ProductHolding{holding | amount: "#{floor(PriceUtil.as_float(qty) * allocation)}"}
+        end)
+
+      {strategy_name, ExchangePositions.new(holdings: strategy_holdings)}
+    end
+    |> Enum.into(%{})
   end
 end

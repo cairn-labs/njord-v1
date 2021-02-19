@@ -18,6 +18,7 @@ defmodule Trader.Alpaca.AlpacaApi do
         :POST -> "POST"
         :GET -> "GET"
         :PUT -> "PUT"
+        :DELETE -> "DELETE"
       end
 
     body_str =
@@ -43,6 +44,7 @@ defmodule Trader.Alpaca.AlpacaApi do
         :GET -> fn -> HTTPoison.get(url, headers) end
         :POST -> fn -> HTTPoison.post(url, body_str, headers) end
         :PUT -> fn -> HTTPoison.put(url, body_str, headers) end
+        :DELETE -> fn -> HTTPoison.delete(url, headers) end
       end
 
     if Keyword.get(opts, :retry, false) do
@@ -56,15 +58,17 @@ defmodule Trader.Alpaca.AlpacaApi do
   defp retry_if_necessary(_, @max_retries, _) do
     {:error, :too_many_failures}
   end
+
   defp retry_if_necessary(request, past_retries, current_sleep) do
     case request.() do
-      {:ok, result} -> result
+      {:ok, result} ->
+        result
+
       _ ->
         :timer.sleep(current_sleep)
         retry_if_necessary(request, past_retries + 1, current_sleep * 2)
     end
   end
-
 
   def parse_response(%HTTPoison.Response{body: body, status_code: 200}) do
     Jason.decode!(body)

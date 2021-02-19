@@ -33,8 +33,11 @@ defmodule Trader.Orders.OrderCreation do
     :ok
   end
 
-  defp submit_stonk_orders(%Prediction{labels: labels} = prediction, exchange) do
-    current_positions = exchange.current_positions()
+  defp submit_stonk_orders(
+         %Prediction{labels: labels, strategy_name: strategy_name} = prediction,
+         exchange
+       ) do
+    current_positions = exchange.current_positions(strategy_name)
 
     current_label_prices =
       labels
