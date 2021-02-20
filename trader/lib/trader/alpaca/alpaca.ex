@@ -288,8 +288,6 @@ defmodule Trader.Alpaca.Alpaca do
     tagged_orders =
       Enum.map(orders, fn order -> %Order{order | source_strategy: strategy_name} end)
 
-    Logger.info("Received orders: #{inspect(tagged_orders)}")
-
     {:reply, :ok, %{state | pending_orders: pending_orders ++ tagged_orders}}
   end
 
@@ -323,7 +321,7 @@ defmodule Trader.Alpaca.Alpaca do
 
   def update_strategy_position(
         strategy_name,
-        %ExchangePositions{holdings: holdings, orders: orders},
+        %ExchangePositions{holdings: holdings, orders: orders} = old_positions,
         placed_orders,
         filled_order_ids,
         canceled_order_ids
@@ -340,10 +338,12 @@ defmodule Trader.Alpaca.Alpaca do
         end)
     }
 
-    Trader.ExchangeUtil.print_positions(
-      "New positions for strategy #{strategy_name}:",
-      new_positions
-    )
+    if new_positions != old_positions do
+      Trader.ExchangeUtil.print_positions(
+        "New positions for strategy #{strategy_name}:",
+        new_positions
+      )
+    end
 
     new_positions
   end

@@ -3,7 +3,7 @@
 
 name: "hold_amd_strategy"
 capital_allocation: 0.5
-cadence_ms: 20000
+cadence_ms: 60000
 prediction_model_config {
   name: "stonk_to_the_moon"
   frame_config {
