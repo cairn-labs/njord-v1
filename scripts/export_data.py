@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import ibm_boto3
 from ibm_botocore.client import Config, ClientError
 import subprocess
