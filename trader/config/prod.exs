@@ -29,6 +29,11 @@ config :trader, Trader.Repo,
   pool_size: 20,
   timeout: 600_000
 
+
+config :trader, Trader.Runners.LiveRunner, enable: false
+config :trader, Trader.Alpaca.Alpaca, enable: false
+
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key
