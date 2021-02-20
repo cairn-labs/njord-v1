@@ -5,6 +5,7 @@ defmodule Trader.Alpaca.MockAlpaca do
   alias Trader.PriceUtil
 
   @aggregate_width 1
+  @genserver_timeout 30_000
 
   def start_link([]) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -20,7 +21,7 @@ defmodule Trader.Alpaca.MockAlpaca do
   end
 
   def current_price(ticker) do
-    GenServer.call(__MODULE__, {:current_price, ticker})
+    GenServer.call(__MODULE__, {:current_price, ticker}, @genserver_timeout)
   end
 
   def set_timestamp(timestamp) do
@@ -36,11 +37,11 @@ defmodule Trader.Alpaca.MockAlpaca do
   end
 
   def submit_order(%Order{} = order) do
-    GenServer.call(__MODULE__, {:submit_order, order})
+    GenServer.call(__MODULE__, {:submit_order, order}, @genserver_timeout)
   end
 
   def portfolio_value() do
-    GenServer.call(__MODULE__, :portfolio_value)
+    GenServer.call(__MODULE__, :portfolio_value, @genserver_timeout)
   end
 
   ####################
