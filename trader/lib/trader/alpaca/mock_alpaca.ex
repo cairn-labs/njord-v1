@@ -15,7 +15,7 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:load_stocks, stock_amounts})
   end
 
-  def current_positions() do
+  def current_positions(_strategy_name) do
     GenServer.call(__MODULE__, :current_positions)
   end
 
@@ -27,7 +27,7 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:set_timestamp, timestamp})
   end
 
-  def execute_order_tree(%OrderTree{orders: orders}) do
+  def execute_order_tree(%OrderTree{orders: orders}, _strategy_name) do
     # Need to toposort these orders into stages. For now, just submit
     # them sequentially.
     for order <- orders do

@@ -57,7 +57,7 @@ defmodule Trader.Orders.OrderCreation do
       |> Enum.into(current_label_prices)
 
     StonkOrderCompiler.get_orders(current_positions, all_current_prices, prediction)
-    |> exchange.execute_order_tree
+    |> exchange.execute_order_tree(strategy_name)
   end
 
   defp submit_fx_orders(%Prediction{labels: []}, exchange) do

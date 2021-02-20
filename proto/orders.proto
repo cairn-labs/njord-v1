@@ -37,6 +37,8 @@ message Order {
     // If this is an order that directly affects another order (e.g. a CANCEL_ORDER)
     // then that order id is set here.
     string target_order_id = 11;
+
+    string source_strategy = 13;
 }
 
 
