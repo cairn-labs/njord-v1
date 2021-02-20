@@ -32,4 +32,11 @@ defmodule Trader.ExchangeUtil do
       }) do
     "MARKET SELL: #{amount} #{product}"
   end
+
+  def describe_order(%Order{
+        order_type: :CANCEL_ORDER,
+        target_order_id: target
+      }) do
+    "CANCEL ORDER: #{target}"
+  end
 end

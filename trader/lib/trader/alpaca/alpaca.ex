@@ -204,9 +204,12 @@ defmodule Trader.Alpaca.Alpaca do
           strategy_positions: strategy_positions
         } = state
       ) do
-    exchange_filled =
+    all_exchange_orders =
       Api.call(:trading, :GET, "v2/orders?status=all", retry: true)
       |> Api.parse_response()
+
+    exchange_filled_ids =
+      all_exchange_orders
       |> Enum.filter(fn
         %{"status" => "filled"} -> true
         _ -> false
@@ -214,22 +217,32 @@ defmodule Trader.Alpaca.Alpaca do
       |> Enum.map(fn %{"client_order_id" => id} -> id end)
       |> Enum.into(MapSet.new())
 
+    canceled_ids =
+      all_exchange_orders
+      |> Enum.filter(fn
+        %{"status" => "canceled"} -> true
+        _ -> false
+      end)
+      |> Enum.map(fn %{"client_order_id" => id} -> id end)
+      |> Enum.into(MapSet.new())
+
     # The exchange doesn't keep track of CANCEL_ORDER orders,
-    # so add them here if their target order has indeed been cancelled
-    filled =
+    # so add them here if their target order has indeed been canceled
+
+    filled_ids =
       placed_orders
       |> Enum.filter(fn
         %Order{order_type: :CANCEL_ORDER} -> true
         _ -> false
       end)
-      |> Enum.filter(fn %Order{target_order_id: target} -> order_cancelled?(target) end)
+      |> Enum.filter(fn %Order{target_order_id: target} -> target in canceled_ids end)
       |> Enum.map(fn %Order{id: id} -> id end)
-      |> Enum.into(exchange_filled)
+      |> Enum.into(exchange_filled_ids)
 
     {can_run, still_pending} =
       pending_orders
       |> Enum.split_with(fn %Order{parent_order_ids: parents} ->
-        MapSet.size(MapSet.difference(MapSet.new(parents), filled)) == 0
+        MapSet.size(MapSet.difference(MapSet.new(parents), filled_ids)) == 0
       end)
 
     [accepted, rejected] =
@@ -242,11 +255,16 @@ defmodule Trader.Alpaca.Alpaca do
       |> Tuple.to_list()
       |> Enum.map(fn os -> Enum.map(os, fn {o, _} -> o end) end)
 
-    new_strategy_positions = update_strategy_positions(strategy_positions, accepted, filled)
+    accepted = mark_orders_as(accepted, :PLACED)
+
+    new_strategy_positions =
+      update_strategy_positions(strategy_positions, accepted, filled_ids, canceled_ids)
 
     {now_filled, still_placed} =
       placed_orders
-      |> Enum.split_with(fn %Order{id: id} -> id in filled end)
+      |> Enum.split_with(fn %Order{id: id} -> id in filled_ids end)
+
+    now_filled = mark_orders_as(now_filled, :FILLED)
 
     pid = self()
     delay = Application.get_env(:trader, __MODULE__)[:milliseconds_per_tick]
@@ -270,48 +288,10 @@ defmodule Trader.Alpaca.Alpaca do
     tagged_orders =
       Enum.map(orders, fn order -> %Order{order | source_strategy: strategy_name} end)
 
+    Logger.info("Received orders: #{inspect(tagged_orders)}")
+
     {:reply, :ok, %{state | pending_orders: pending_orders ++ tagged_orders}}
   end
-
-  # def handle_call(
-  #       {:execute_order_tree, %OrderTree{orders: orders}},
-  #       _from,
-  #       %{pending_orders: pending_orders} = state
-  #     ) do
-  #   # Actually, let's simplify this by just serializing all orders first
-  #   # First, execute orders with no dependencies
-  #   {base_orders, dependent_orders} =
-  #     Enum.split_with(orders, fn %Order{parent_order_ids: parents} -> parents == [] end)
-
-  #   [_accepted_ids, rejected_ids] =
-  #     base_orders
-  #     |> Enum.map(&order_request_object/1)
-  #     |> Enum.map(fn o -> {Map.get(o, :client_order_id), submit_order_request(o)} end)
-  #     |> Enum.split_with(fn
-  #       {_, :ok} -> true
-  #       {_, :error} -> false
-  #     end)
-  #     |> Tuple.to_list()
-  #     |> Enum.map(fn os -> Enum.map(os, fn {id, _} -> id end) end)
-
-  #   # TODO make this recursive to reject more deeply nested dependent orders
-  #   accepted_dependent_orders =
-  #     dependent_orders
-  #     |> Enum.flat_map(fn %Order{id: id, parent_order_ids: parents} = order ->
-  #       if MapSet.size(MapSet.intersection(MapSet.new(parents), MapSet.new(rejected_ids))) > 0 do
-  #         Logger.warn("Order #{id} depends on a rejected order; discarding.")
-  #         []
-  #       else
-  #         [order]
-  #       end
-  #     end)
-
-  #   {:reply, :ok,
-  #    %{
-  #      state
-  #      | pending_orders: pending_orders ++ accepted_dependent_orders
-  #    }}
-  # end
 
   def handle_call(
         {:get_strategy_positions, strategy_name},
@@ -321,15 +301,22 @@ defmodule Trader.Alpaca.Alpaca do
     {:reply, Map.get(strategy_positions, strategy_name), state}
   end
 
-  defp order_cancelled?(order_id) do
-    # Call API by client order id and see if it is in state cancelled
-  end
-
-  def update_strategy_positions(strategy_positions, placed_orders, filled_order_ids) do
+  def update_strategy_positions(
+        strategy_positions,
+        placed_orders,
+        filled_order_ids,
+        canceled_order_ids
+      ) do
     strategy_positions
     |> Enum.map(fn {strategy_name, positions} ->
       {strategy_name,
-       update_strategy_position(strategy_name, positions, placed_orders, filled_order_ids)}
+       update_strategy_position(
+         strategy_name,
+         positions,
+         placed_orders,
+         filled_order_ids,
+         canceled_order_ids
+       )}
     end)
     |> Enum.into(%{})
   end
@@ -338,13 +325,20 @@ defmodule Trader.Alpaca.Alpaca do
         strategy_name,
         %ExchangePositions{holdings: holdings, orders: orders},
         placed_orders,
-        filled_order_ids
+        filled_order_ids,
+        canceled_order_ids
       ) do
     new_orders =
       placed_orders
       |> Enum.filter(fn %Order{source_strategy: s} -> s == strategy_name end)
 
-    new_positions = %ExchangePositions{holdings: holdings, orders: orders ++ new_orders}
+    new_positions = %ExchangePositions{
+      holdings: holdings,
+      orders:
+        Enum.filter(orders ++ new_orders, fn %Order{id: id} ->
+          id not in filled_order_ids and id not in canceled_order_ids
+        end)
+    }
 
     Trader.ExchangeUtil.print_positions(
       "New positions for strategy #{strategy_name}:",
@@ -418,5 +412,10 @@ defmodule Trader.Alpaca.Alpaca do
     |> Enum.filter(fn %Order{parent_order_ids: parents} ->
       MapSet.size(MapSet.intersection(MapSet.new(parents), rejected_ids)) == 0
     end)
+  end
+
+  def mark_orders_as(orders, status) do
+    orders
+    |> Enum.map(fn order -> %Order{order | status: status} end)
   end
 end
