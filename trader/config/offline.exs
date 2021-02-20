@@ -31,7 +31,11 @@ config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
 config :trader, Trader.Reddit.RedditDataCollector, enable: false
 
-config :trader, Trader.Reddit.AlpacaDataCollector, enable: false
+config :trader, Trader.Alpaca.AlpacaDataCollector, enable: false
+
+config :trader, Trader.Runners.LiveRunner, enable: false
+
+config :trader, Trader.Alpaca.Alpaca, enable: false
 
 # Do not include metadata nor timestamps in development logs
 config :logger,
