@@ -1,0 +1,31 @@
+# proto-file: frame_config.proto
+# proto-message: FrameConfig
+
+frame_width_ms: 1800000 # 15 minutes
+num_frames_requested: 200
+sample_start_date: "2021-02-17"
+sample_end_date: "2021-02-20"
+feature_configs {
+  data_point_type: STONK_AGGREGATE
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 60000
+  interpolate_strategy {
+    max_interpolation_time_diff_ms: 180000
+  }
+  vectorization_strategy: PRICE_AND_VOLUME
+  stonk_aggregate_config {
+    ticker: {{ticker}}
+    width_minutes: 1
+  }
+}
+label_config {
+  prediction_delay_ms: 120000
+  label_type: STONK_PRICE
+  stonk_price_config {
+    ticker: {{ticker}}
+    width_minutes: 1
+  }
+}
+sampling_strategy {
+  sampling_strategy_type: RANDOM_WINDOW
+}

@@ -2,7 +2,6 @@ import requests
 from google.protobuf.text_format import Parse
 from analyst.proto.frame_config_pb2 import FrameConfig
 from analyst.dataset import DataSet
-from analyst.training import train_dataset
 import sys
 
 # URL = f'http://trader.tendies.ai/api/get_training_data'
