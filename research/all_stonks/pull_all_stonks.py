@@ -1,7 +1,6 @@
 import requests
 from google.protobuf.text_format import Parse
 from analyst.proto.frame_config_pb2 import FrameConfig
-from analyst.dataset import DataSet
 import os
 
 # All tickers with at least 1000 one minute bars over four days
@@ -18,7 +17,7 @@ for stonk in all_stonks:
     Parse(frame_config_text, frame_config)
     file_upload = {'frame_config': ('frame_config.pb', frame_config.SerializeToString())}
     response = requests.post(URL, files=file_upload, allow_redirects=True)
-    local_dataset = os.path.join(os.path.dirname(__file__), f'{stonk}.zip')
+    local_dataset = os.path.join(os.path.dirname(__file__), 'data', f'{stonk}.zip')
     with open(local_dataset, 'wb') as handle:
         handle.write(response.content)
         print("Wrote", local_dataset)
