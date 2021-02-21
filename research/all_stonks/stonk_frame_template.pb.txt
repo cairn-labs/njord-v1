@@ -1,8 +1,8 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 1800000 # 15 minutes
-num_frames_requested: 200
+frame_width_ms: 900000 # 15 minutes
+num_frames_requested: 100
 sample_start_date: "2021-02-17"
 sample_end_date: "2021-02-20"
 feature_configs {
