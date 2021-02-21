@@ -7,7 +7,6 @@ import sys
 
 # URL = f'http://trader.tendies.ai/api/get_training_data'
 URL = "http://localhost:4000/api/get_training_data"
-LOCAL_DATASET_LOCATION = '/tmp/frames.zip'
 
 with open(sys.argv[1]) as handle:
     frame_config_text = handle.read()
@@ -24,8 +23,8 @@ if '--cached' not in sys.argv:
     with open(local_dataset_location, 'wb') as handle:
         handle.write(response.content)
 
-# print('Vectorizing training data...')
-# dataset = DataSet(LOCAL_DATASET_LOCATION, frame_config)
+print('Vectorizing training data...')
+dataset = DataSet(local_dataset_location, frame_config)
 
 # print('Starting training...')
 # print('Class counts:', dataset.class_counts())

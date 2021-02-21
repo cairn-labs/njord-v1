@@ -73,4 +73,14 @@ defmodule Trader.Selectors do
       }) do
     "#{Atom.to_string(base)}-#{Atom.to_string(counter)}"
   end
+
+  def from_label_config(%LabelConfig{
+        label_type: :STONK_PRICE,
+        stonk_price_config: %StonkPriceLabelConfig{
+          ticker: ticker,
+          width_minutes: width_minutes
+        }
+      }) do
+    "#{ticker}-#{width_minutes}"
+  end
 end

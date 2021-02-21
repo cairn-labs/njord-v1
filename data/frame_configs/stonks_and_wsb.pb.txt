@@ -2,7 +2,7 @@
 # proto-message: FrameConfig
 
 frame_width_ms: 1800000 # 30 minutes
-num_frames_requested: 10
+num_frames_requested: 50
 sample_start_date: "2021-02-17"
 sample_end_date: "2021-02-20"
 feature_configs {
@@ -14,15 +14,16 @@ feature_configs {
   }
   vectorization_strategy: PRICE_ONLY
   stonk_aggregate_config {
-    ticker: "SPY"
+    ticker: "GME"
     width_minutes: 1
   }
 }
 label_config {
-  prediction_delay_ms: 30000
+  prediction_delay_ms: 120000
   label_type: STONK_PRICE
   stonk_price_config {
-    ticker: "SPY"
+    ticker: "AMC"
+    width_minutes: 1
   }
 }
 sampling_strategy {

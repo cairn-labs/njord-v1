@@ -2,11 +2,14 @@ from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.frame_config_pb2 import FrameConfig
 from analyst.proto.feature_config_pb2 import FeatureConfig
 from analyst.proto.frame_component_pb2 import FrameComponent
-from analyst.proto.data_point_pb2 import L2_ORDER_BOOK, DataPointType
-from analyst.proto.label_config_pb2 import FX_RATE
+from analyst.proto.data_point_pb2 import L2_ORDER_BOOK, STONK_AGGREGATE, DataPointType
+from analyst.proto.label_config_pb2 import FX_RATE, STONK_PRICE
 from analyst.vectorization.l2_order_book_vectorization import (
     vectorize_l2_order_book_frame_component, l2_order_book_feature_shape)
 from analyst.vectorization.fx_rate_label_vectorization import vectorize_fx_rate_label
+from analyst.vectorization.stonk_aggregate_vectorization import (
+    vectorize_stonk_aggregate_frame_component, stonk_aggregate_feature_shape)
+from analyst.vectorization.stonk_price_label_vectorization import vectorize_stonk_price_label
 import numpy as np
 
 
@@ -34,11 +37,18 @@ def vectorize_component(component: FrameComponent, feature_config: FeatureConfig
     if component.data_point_type == L2_ORDER_BOOK:
         return (l2_order_book_feature_shape(feature_config.vectorization_strategy),
                 vectorize_l2_order_book_frame_component(component, feature_config.vectorization_strategy))
+    elif component.data_point_type == STONK_AGGREGATE:
+        return (stonk_aggregate_feature_shape(feature_config.vectorization_strategy),
+                vectorize_stonk_aggregate_frame_component(component, feature_config.vectorization_strategy))
+    else:
+        raise NotImplementedError(f"Frame component type {DataPointType.Name(component.data_point_type)} not supported.")
 
 
 def vectorize_label(data_frame: DataFrame, frame_config: FrameConfig):
     if frame_config.label_config.label_type == FX_RATE:
         return vectorize_fx_rate_label(data_frame, frame_config)
+    if frame_config.label_config.label_type == STONK_PRICE:
+        return vectorize_stonk_price_label(data_frame)
 
 
 def data_timestamps(data_frame: DataFrame, data_point_type: DataPointType) -> np.ndarray:

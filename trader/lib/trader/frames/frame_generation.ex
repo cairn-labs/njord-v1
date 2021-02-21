@@ -168,6 +168,7 @@ defmodule Trader.Frames.FrameGeneration do
           [frame]
         rescue
           e in FunctionClauseError ->
+            Logger.warn("NOOOOOO #{inspect(config)}")
             []
         end
       end)
