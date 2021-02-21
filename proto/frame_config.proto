@@ -9,4 +9,7 @@ message FrameConfig {
     LabelConfig label_config = 4;
     uint32 num_frames_requested = 5;
     SamplingStrategy sampling_strategy = 6;
+
+    string sample_start_date= 7;
+    string sample_end_date = 8;
 }

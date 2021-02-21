@@ -42,6 +42,8 @@ defmodule Trader.Frames.FrameGeneration do
   defp available_windows(%FrameConfig{
          frame_width_ms: frame_width_ms,
          feature_configs: feature_configs,
+         sample_start_date: start_date,
+         sample_end_date: end_date,
          sampling_strategy: %{sampling_strategy_type: :RANDOM_WINDOW}
        }) do
     required_types =
@@ -51,7 +53,7 @@ defmodule Trader.Frames.FrameGeneration do
       |> Enum.into(MapSet.new())
 
     feature_configs
-    |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms) end)
+    |> Enum.flat_map(fn c -> available_windows_by_type(c, frame_width_ms, start_date, end_date) end)
     |> Enum.group_by(fn {ts, _type} -> ts end)
     |> Stream.map(fn {k, values} ->
       {k,
@@ -102,7 +104,7 @@ defmodule Trader.Frames.FrameGeneration do
     |> Enum.flat_map(fn {times, p} -> Enum.take_random(times, floor(min_quotient * p)) end)
   end
 
-  defp available_windows_by_type(%FeatureConfig{interpolate_strategy: nil}, _) do
+  defp available_windows_by_type(%FeatureConfig{interpolate_strategy: nil}, _, _, _) do
     []
   end
 
@@ -110,7 +112,7 @@ defmodule Trader.Frames.FrameGeneration do
          %FeatureConfig{
            interpolate_strategy: %InterpolateStrategy{max_interpolation_time_diff_ms: 0}
          },
-         _
+         _, _, _
        ) do
     []
   end
@@ -122,7 +124,9 @@ defmodule Trader.Frames.FrameGeneration do
              max_interpolation_time_diff_ms: max_time_diff
            }
          } = config,
-         frame_width_ms
+    frame_width_ms,
+    start_date,
+    end_date
        ) do
     selector = Trader.Selectors.from_feature_config(config)
 
@@ -131,7 +135,9 @@ defmodule Trader.Frames.FrameGeneration do
         data_point_type,
         max_time_diff,
         frame_width_ms,
-        selector
+        selector,
+        start_date,
+        end_date
       )
 
     Logger.debug(
@@ -192,6 +198,8 @@ defmodule Trader.Frames.FrameGeneration do
        }) do
     for feature_config <- feature_configs do
       selector = Trader.Selectors.from_feature_config(feature_config)
+      Logger.info("FC: #{inspect feature_config}")
+      Logger.info("Selector: #{inspect selector}")
 
       data_points =
         Db.DataPoints.get_frame_component(

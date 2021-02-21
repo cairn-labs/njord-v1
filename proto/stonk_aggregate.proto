@@ -2,6 +2,7 @@ syntax = "proto3";
 
 message StonkAggregateConfig {
     string ticker = 1;
+    int32 width_minutes = 2;
 }
 
 message StonkAggregate {

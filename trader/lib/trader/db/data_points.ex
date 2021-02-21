@@ -56,13 +56,27 @@ defmodule Trader.Db.DataPoints do
     end
   end
 
-  def get_available_windows(data_point_type, max_time_diff_ms, frame_width_ms, selector) do
+  def get_available_windows(data_point_type, max_time_diff_ms, frame_width_ms, selector, start_date, end_date) do
     type = DataPointType.mapping()[data_point_type]
 
-    {selector_expr, selector_value} =
+    {current_param, selector_expr, selector_value} =
       case selector do
-        nil -> {"", []}
-        _ -> {"AND selector = $4 ", [selector]}
+        nil -> {4, "", []}
+        _ -> {5, "AND selector = $4 ", [selector]}
+      end
+
+    {current_param, start_expr, start_value} =
+      case start_date do
+        nil -> {current_param, "", []}
+        _ -> {current_param + 1, "AND time > $#{current_param}", [
+                TimeUtil.date_string_to_datetime(start_date, :begin)]}
+      end
+
+    {_current_param, end_expr, end_value} =
+      case end_date do
+        nil -> {current_param, "", []}
+        _ -> {current_param + 1, "AND time < $#{current_param}", [
+                TimeUtil.date_string_to_datetime(end_date, :end)]}
       end
 
     {:ok, %{rows: rows}} =
@@ -70,13 +84,14 @@ defmodule Trader.Db.DataPoints do
         Repo,
         "SELECT time_bucket('#{frame_width_ms} milliseconds', bucket, $1::timestamptz) AS frame FROM " <>
           "(SELECT time_bucket('#{max_time_diff_ms} milliseconds', time, $1::timestamptz) AS bucket FROM data " <>
-          "WHERE data_type = $2 #{selector_expr} GROUP BY bucket) as sub " <>
+          "WHERE data_type = $2 #{selector_expr} #{start_expr} #{end_expr} " <>
+          "GROUP BY bucket) as sub " <>
           "GROUP BY frame HAVING count(*) >= $3 - 1 ORDER BY frame asc",
         [
           @origin,
           type,
           floor(frame_width_ms / max_time_diff_ms)
-        ] ++ selector_value
+        ] ++ selector_value ++ start_value ++ end_value
       )
 
     Enum.map(rows, &hd/1)

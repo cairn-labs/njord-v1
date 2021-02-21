@@ -13,4 +13,14 @@ defmodule Trader.TimeUtil do
     end_date = Date.from_iso8601!(end_date_str)
     Date.range(start_date, end_date) |> Stream.map(&Date.to_string/1)
   end
+
+  def date_string_to_datetime(date_string, :begin) do
+    {:ok, datetime, 0} = DateTime.from_iso8601("#{date_string}T00:00:00Z")
+    datetime
+  end
+
+  def date_string_to_datetime(date_string, :end) do
+    {:ok, datetime, 0} = DateTime.from_iso8601("#{date_string}T23:59:59Z")
+    datetime
+  end
 end

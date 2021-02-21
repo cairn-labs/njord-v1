@@ -50,6 +50,16 @@ defmodule Trader.Selectors do
     "#{Atom.to_string(base)}-#{Atom.to_string(counter)}"
   end
 
+  def from_feature_config(%FeatureConfig{
+        data_point_type: :STONK_AGGREGATE,
+        stonk_aggregate_config: %StonkAggregateConfig{
+          ticker: ticker,
+          width_minutes: width_minutes
+        }
+                          }) do
+    "#{ticker}-#{width_minutes}"
+  end
+
   def from_feature_config(_), do: nil
 
   def from_label_config(%LabelConfig{

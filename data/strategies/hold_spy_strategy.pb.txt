@@ -15,6 +15,7 @@ prediction_model_config {
       vectorization_strategy: PRICE_ONLY
       stonk_aggregate_config {
         ticker: "SPY"
+        width_minutes: 1
       }
     }
   }
