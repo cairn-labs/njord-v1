@@ -56,7 +56,14 @@ defmodule Trader.Db.DataPoints do
     end
   end
 
-  def get_available_windows(data_point_type, max_time_diff_ms, frame_width_ms, selector, start_date, end_date) do
+  def get_available_windows(
+        data_point_type,
+        max_time_diff_ms,
+        frame_width_ms,
+        selector,
+        start_date,
+        end_date
+      ) do
     type = DataPointType.mapping()[data_point_type]
 
     {current_param, selector_expr, selector_value} =
@@ -67,16 +74,26 @@ defmodule Trader.Db.DataPoints do
 
     {current_param, start_expr, start_value} =
       case start_date do
-        nil -> {current_param, "", []}
-        _ -> {current_param + 1, "AND time > $#{current_param}", [
-                TimeUtil.date_string_to_datetime(start_date, :begin)]}
+        nil ->
+          {current_param, "", []}
+
+        _ ->
+          {current_param + 1, "AND time > $#{current_param}",
+           [
+             TimeUtil.date_string_to_datetime(start_date, :begin)
+           ]}
       end
 
     {_current_param, end_expr, end_value} =
       case end_date do
-        nil -> {current_param, "", []}
-        _ -> {current_param + 1, "AND time < $#{current_param}", [
-                TimeUtil.date_string_to_datetime(end_date, :end)]}
+        nil ->
+          {current_param, "", []}
+
+        _ ->
+          {current_param + 1, "AND time < $#{current_param}",
+           [
+             TimeUtil.date_string_to_datetime(end_date, :end)
+           ]}
       end
 
     {:ok, %{rows: rows}} =

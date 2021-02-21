@@ -56,7 +56,7 @@ defmodule Trader.Selectors do
           ticker: ticker,
           width_minutes: width_minutes
         }
-                          }) do
+      }) do
     "#{ticker}-#{width_minutes}"
   end
 
