@@ -5,4 +5,5 @@ enum VectorizationStrategy {
   FULL_ORDER_BOOK = 1;
   PRICE_ONLY = 2;
   PRICE_AND_VOLUME = 3;
+  WEIGHTED_BAG_OF_WORDS = 4;
 }
