@@ -1,7 +1,7 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 960000 # 15 minutes
+frame_width_ms: 960000 # 16 minutes
 num_frames_requested: 100
 sample_start_date: "2021-02-17"
 sample_end_date: "2021-02-20"
@@ -9,9 +9,6 @@ feature_configs {
   data_point_type: STONK_AGGREGATE
   bucketing_strategy: EARLIEST
   bucket_width_ms: 120000
-  interpolate_strategy {
-    max_interpolation_time_diff_ms: 300000
-  }
   vectorization_strategy: PRICE_AND_VOLUME
   stonk_aggregate_config {
     ticker: "GME"
@@ -21,10 +18,7 @@ feature_configs {
 feature_configs {
   data_point_type: SUBREDDIT_TOP_LISTING
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 900000  # 15 minutes
-  interpolate_strategy {
-    max_interpolation_time_diff_ms: 1800000  # 30 minutes
-  }
+  bucket_width_ms: 960000  # 16 minutes
   vectorization_strategy: WEIGHTED_BAG_OF_WORDS
   subreddit_top_listing_config {
     subreddit_name: "wallstreetbets"

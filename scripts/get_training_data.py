@@ -21,10 +21,3 @@ if '--cached' not in sys.argv:
     response = requests.post(URL, files=file_upload, allow_redirects=True)
     with open(local_dataset_location, 'wb') as handle:
         handle.write(response.content)
-
-print('Vectorizing training data...')
-dataset = DataSet(local_dataset_location, frame_config)
-
-# print('Starting training...')
-# print('Class counts:', dataset.class_counts())
-# train_dataset(dataset)

@@ -60,6 +60,15 @@ defmodule Trader.Selectors do
     "#{ticker}-#{width_minutes}"
   end
 
+  def from_feature_config(%FeatureConfig{
+        data_point_type: :SUBREDDIT_TOP_LISTING,
+        subreddit_top_listing_config: %SubredditTopListingConfig{
+          subreddit_name: name
+        }
+      }) do
+    name
+  end
+
   def from_feature_config(_), do: nil
 
   def from_label_config(%LabelConfig{

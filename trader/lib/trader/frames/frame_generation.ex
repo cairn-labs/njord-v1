@@ -106,19 +106,45 @@ defmodule Trader.Frames.FrameGeneration do
     |> Enum.flat_map(fn {times, p} -> Enum.take_random(times, floor(min_quotient * p)) end)
   end
 
-  defp available_windows_by_type(%FeatureConfig{interpolate_strategy: nil}, _, _, _) do
-    []
+  defp available_windows_by_type(
+         %FeatureConfig{interpolate_strategy: nil} = config,
+         frame_width_ms,
+         start_date,
+         end_date
+       ) do
+    available_windows_by_type(
+      %FeatureConfig{
+        config
+        | interpolate_strategy:
+            InterpolateStrategy.new(max_interpolation_time_diff_ms: frame_width_ms)
+      },
+      frame_width_ms,
+      start_date,
+      end_date
+    )
   end
 
   defp available_windows_by_type(
          %FeatureConfig{
-           interpolate_strategy: %InterpolateStrategy{max_interpolation_time_diff_ms: 0}
-         },
-         _,
-         _,
-         _
+           interpolate_strategy:
+             %InterpolateStrategy{max_interpolation_time_diff_ms: 0} = strategy
+         } = config,
+         frame_width_ms,
+         start_date,
+         end_date
        ) do
-    []
+    available_windows_by_type(
+      %FeatureConfig{
+        config
+        | interpolate_strategy: %InterpolateStrategy{
+            strategy
+            | max_interpolation_time_diff_ms: frame_width_ms
+          }
+      },
+      frame_width_ms,
+      start_date,
+      end_date
+    )
   end
 
   defp available_windows_by_type(
