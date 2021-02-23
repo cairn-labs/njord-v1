@@ -4,7 +4,7 @@ defmodule Mix.Tasks.Trader.Backtest do
 
   def run([start_timestamp, end_timestamp, strategy_proto]) do
     {:ok, _} = Application.ensure_all_started(:trader)
-    Logger.configure(level: :debug)
+    Logger.configure(level: :info, format: "[$level] $message\n")
     Logger.info("Running backtest from #{start_timestamp} to #{end_timestamp}...")
 
     BacktestRunner.load(strategy_proto)

@@ -8,9 +8,15 @@ enum LabelType {
     STONK_PRICE = 2;
 }
 
+enum LabelOptions {
+    ABSOLUTE_VALUE = 0;
+    RELATIVE_VALUE = 1;
+}
+
 message LabelConfig {
     uint64 prediction_delay_ms = 1;
     LabelType label_type = 2;
+    LabelOptions label_options = 5;
 
     FxRateLabelConfig fx_rate_config = 3;
     StonkPriceLabelConfig stonk_price_config = 4;

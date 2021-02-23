@@ -154,7 +154,7 @@ defmodule Trader.Alpaca.MockAlpaca do
       )
       |> add_to_holding(product, -1 * PriceUtil.as_float(amount_str))
 
-    Logger.info("New holdings: #{inspect(new_holdings)}")
+    Logger.debug("New holdings: #{inspect(new_holdings)}")
 
     {:reply, :ok, %{state | positions: %ExchangePositions{positions | holdings: new_holdings}}}
   end
@@ -186,7 +186,7 @@ defmodule Trader.Alpaca.MockAlpaca do
       )
       |> add_to_holding(product, PriceUtil.as_float(amount_str))
 
-    Logger.info("New holdings: #{inspect(new_holdings)}")
+    Logger.debug("New holdings: #{inspect(new_holdings)}")
 
     {:reply, :ok, %{state | positions: %ExchangePositions{positions | holdings: new_holdings}}}
   end

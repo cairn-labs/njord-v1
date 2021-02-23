@@ -1,5 +1,6 @@
 from .fx_simple_linear_regression import FxSimpleLinearRegressionModel
 from .stonk_to_the_moon import StonkToTheMoonModel
+from .subreddit_ticker_mention_momentum import SubredditTickerMentionMomentumModel
 from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.prediction_model_config_pb2 import PredictionModelConfig
 from analyst.proto.prediction_pb2 import Prediction
@@ -7,7 +8,8 @@ from analyst.proto.prediction_pb2 import Prediction
 
 __all_models = [
     FxSimpleLinearRegressionModel,
-    StonkToTheMoonModel
+    StonkToTheMoonModel,
+    SubredditTickerMentionMomentumModel
 ]
 __model_type_lookup = {m.name(): m for m in  __all_models}
 

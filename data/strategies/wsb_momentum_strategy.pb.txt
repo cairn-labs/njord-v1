@@ -6,17 +6,16 @@ capital_allocation: 1.0
 cadence_ms: 7200000  # 2 hours
 schedule: MARKET_HOURS
 prediction_model_config {
-  name: "stonk_to_the_moon"
+  name: "subreddit_ticker_mention_momentum"
   frame_config {
-    frame_width_ms: 1200000
+    frame_width_ms: 10800000  # 6 hours
     feature_configs {
-      data_point_type: STONK_AGGREGATE
+      data_point_type: SUBREDDIT_TOP_LISTING
       bucketing_strategy: EARLIEST
-      bucket_width_ms: 1200000
-      vectorization_strategy: PRICE_ONLY
-      stonk_aggregate_config {
-        ticker: "GME"
-        width_minutes: 1
+      bucket_width_ms: 900000  # 15 minutes
+      vectorization_strategy: WEIGHTED_BAG_OF_WORDS
+      subreddit_top_listing_config {
+        subreddit_name: "wallstreetbets"
       }
     }
   }

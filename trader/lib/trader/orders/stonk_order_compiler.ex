@@ -123,18 +123,23 @@ defmodule Trader.Orders.StonkOrderCompiler do
   def label_deltas(prices, labels) do
     labels
     |> Enum.map(fn label ->
-      {label.label_config.stonk_price_config.ticker, PriceUtil.as_float(label.value_decimal)}
+      {label.label_config.stonk_price_config.ticker, PriceUtil.as_float(label.value_decimal),
+       label.label_config.label_options}
     end)
-    |> Enum.map(fn {ticker, predicted_price} ->
-      {ticker, predicted_price, Map.get(prices, ticker)}
+    |> Enum.map(fn {ticker, predicted_value, label_options} ->
+      {ticker, predicted_value, label_options, Map.get(prices, ticker)}
     end)
     |> Enum.filter(fn
-      {_, _, 0} -> false
-      {_, _, nil} -> false
+      {_, _, _, 0} -> false
+      {_, _, _, nil} -> false
       _ -> true
     end)
-    |> Enum.map(fn {ticker, predicted, current} ->
-      {ticker, (predicted - current) / current}
+    |> Enum.map(fn
+      {ticker, predicted, :ABSOLUTE_VALUE, current} ->
+        {ticker, (predicted - current) / current}
+
+      {ticker, predicted, :RELATIVE_VALUE, current} ->
+        {ticker, predicted}
     end)
     |> Enum.into(%{})
   end
