@@ -76,6 +76,19 @@ defmodule Trader.Alpaca.Alpaca do
     GenServer.call(__MODULE__, {:get_strategy_positions, strategy_name})
   end
 
+  def get_calendar() do
+    Api.call(
+      :trading,
+      :GET,
+      "v2/calendar"
+    )
+    |> Api.parse_response()
+    |> Enum.map(fn %{"date" => date, "open" => open, "close" => close} ->
+      {date, %{"o" => open, "c" => close}}
+    end)
+    |> Enum.into(%{})
+  end
+
   def order_request_object(
         %Order{
           id: order_id,

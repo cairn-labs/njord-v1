@@ -16,8 +16,8 @@ defmodule Trader.Runners.BacktestRunner do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
-  def load(strategies_dir) do
-    GenServer.call(__MODULE__, {:load, strategies_dir})
+  def load(strategy_pb) do
+    GenServer.call(__MODULE__, {:load, strategy_pb})
   end
 
   def set_positions(positions_map) do
@@ -61,18 +61,16 @@ defmodule Trader.Runners.BacktestRunner do
 
   @impl true
   def handle_call(
-        {:load, strategies_dir},
+        {:load, strategy_pb},
         _from,
         state
       ) do
-    strategies = read_strategies(strategies_dir)
-    check_strategies(strategies)
-    tick_width_ms = get_overall_tick_width(strategies)
+    strategy = read_strategy(strategy_pb)
 
     state =
       state
-      |> Map.put(:strategies, strategies)
-      |> Map.put(:tick_width_ms, tick_width_ms)
+      |> Map.put(:strategies, [strategy])
+      |> Map.put(:tick_width_ms, strategy.cadence_ms)
 
     {:reply, :ok, state}
   end
@@ -93,6 +91,7 @@ defmodule Trader.Runners.BacktestRunner do
 
     prediction =
       strategies
+      |> Enum.filter(fn strat -> Trader.Strategies.is_schedulable?(strat, window_start) end)
       |> Enum.filter(fn %TradingStrategy{cadence_ms: cadence} -> rem(tick, cadence) == 0 end)
       |> Enum.map(fn %TradingStrategy{
                        prediction_model_config: prediction_config,
@@ -111,30 +110,9 @@ defmodule Trader.Runners.BacktestRunner do
   ###################
   # Private Methods #
   ###################
-  defp read_strategies(dirname) do
-    dirname
+  defp read_strategy(filename) do
+    filename
     |> Path.expand()
-    |> Path.join("*.pb.txt")
-    |> Path.wildcard()
-    |> Enum.map(fn p ->
-      Trader.ProtoUtil.parse_text_format(p, TradingStrategy, "trading_strategy.proto")
-    end)
-  end
-
-  defp check_strategies(strategies) do
-    total_allocation =
-      strategies
-      |> Enum.map(fn %TradingStrategy{capital_allocation: c} -> c end)
-      |> Enum.sum()
-
-    if total_allocation > 1.0 do
-      raise "Total capital allocation of all strategies must be at most 1"
-    end
-  end
-
-  defp get_overall_tick_width(strategies) do
-    strategies
-    |> Enum.map(fn %TradingStrategy{cadence_ms: c} -> c end)
-    |> Enum.reduce(fn x, acc -> Integer.gcd(x, acc) end)
+    |> Trader.ProtoUtil.parse_text_format(TradingStrategy, "trading_strategy.proto")
   end
 end

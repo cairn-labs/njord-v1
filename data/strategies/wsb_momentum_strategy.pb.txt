@@ -1,9 +1,10 @@
 # proto-file: trading_strategy.proto
 # proto-message: TradingStrategy
 
-name: "hold_spy_strategy"
+name: "wsb_momentum_strategy"
 capital_allocation: 1.0
-cadence_ms: 14400000  # 4 hours
+cadence_ms: 7200000  # 2 hours
+schedule: MARKET_HOURS
 prediction_model_config {
   name: "stonk_to_the_moon"
   frame_config {
@@ -14,12 +15,12 @@ prediction_model_config {
       bucket_width_ms: 1200000
       vectorization_strategy: PRICE_ONLY
       stonk_aggregate_config {
-        ticker: "SPY"
+        ticker: "GME"
         width_minutes: 1
       }
     }
   }
   label_config {
-    prediction_delay_ms: 31536000000
+    prediction_delay_ms: 120000
   }
 }
