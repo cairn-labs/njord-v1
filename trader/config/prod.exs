@@ -30,6 +30,7 @@ config :trader, Trader.Repo,
 
 config :trader, Trader.Runners.LiveRunner, enable: true
 config :trader, Trader.Alpaca.Alpaca, enable: true
+config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 
 # ## SSL Support
 #
