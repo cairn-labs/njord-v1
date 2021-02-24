@@ -157,7 +157,10 @@ defmodule Trader.Db.DataPoints do
       SQL.query(Repo, query, [type, start_timestamp, limit] ++ selector_value)
 
     rows
-    |> Enum.map(fn [_ts, value] -> value end)
+    |> Enum.flat_map(fn
+      [_ts, value] when value != nil -> [value]
+      _ -> []
+    end)
   end
 
   def get_data_at_time(timestamp, data_point_type, selector, before_or_after) do

@@ -6,6 +6,7 @@ from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.label_pb2 import Label
 from analyst.proto.prediction_pb2 import Prediction
 from analyst.proto.label_config_pb2 import LabelType
+import time
 
 
 class StonkToTheMoonModel(PricePredictionModel):
@@ -24,7 +25,10 @@ class StonkToTheMoonModel(PricePredictionModel):
 
     def predict(self, data_frame: DataFrame) -> Label:
         timestamps = data_timestamps(data_frame, DataPointType.STONK_AGGREGATE)
-        target_timestamp = timestamps[-1] + self.prediction_delay_ms_
+        if timestamps:
+            target_timestamp = timestamps[-1] + self.prediction_delay_ms_
+        else:
+            target_timestamp = int(time.time() * 1000) + self.prediction_delay_ms_
 
         result = Prediction()
         label = result.labels.add()

@@ -221,14 +221,14 @@ defmodule Trader.Alpaca.Alpaca do
       Api.call(:trading, :GET, "v2/orders?status=all", retry: true)
       |> Api.parse_response()
 
-    exchange_filled_ids =
+    exchange_filled_prices =
       all_exchange_orders
       |> Enum.filter(fn
         %{"status" => "filled"} -> true
         _ -> false
       end)
-      |> Enum.map(fn %{"client_order_id" => id} -> id end)
-      |> Enum.into(MapSet.new())
+      |> Enum.map(fn %{"client_order_id" => id, "filled_avg_price" => price} -> {id, price} end)
+      |> Enum.into(%{})
 
     canceled_ids =
       all_exchange_orders
@@ -250,7 +250,7 @@ defmodule Trader.Alpaca.Alpaca do
       end)
       |> Enum.filter(fn %Order{target_order_id: target} -> target in canceled_ids end)
       |> Enum.map(fn %Order{id: id} -> id end)
-      |> Enum.into(exchange_filled_ids)
+      |> Enum.into(exchange_filled_prices |> Map.keys() |> MapSet.new())
 
     {can_run, still_pending} =
       pending_orders
@@ -271,7 +271,13 @@ defmodule Trader.Alpaca.Alpaca do
     accepted = mark_orders_as(accepted, :PLACED)
 
     new_strategy_positions =
-      update_strategy_positions(strategy_positions, accepted, filled_ids, canceled_ids)
+      update_strategy_positions(
+        strategy_positions,
+        accepted,
+        filled_ids,
+        canceled_ids,
+        exchange_filled_prices
+      )
 
     {now_filled, still_placed} =
       placed_orders
@@ -316,7 +322,8 @@ defmodule Trader.Alpaca.Alpaca do
         strategy_positions,
         placed_orders,
         filled_order_ids,
-        canceled_order_ids
+        canceled_order_ids,
+        exchange_filled_prices
       ) do
     strategy_positions
     |> Enum.map(fn {strategy_name, positions} ->
@@ -326,7 +333,8 @@ defmodule Trader.Alpaca.Alpaca do
          positions,
          placed_orders,
          filled_order_ids,
-         canceled_order_ids
+         canceled_order_ids,
+         exchange_filled_prices
        )}
     end)
     |> Enum.into(%{})
@@ -337,14 +345,15 @@ defmodule Trader.Alpaca.Alpaca do
         %ExchangePositions{holdings: holdings, orders: orders} = old_positions,
         placed_orders,
         filled_order_ids,
-        canceled_order_ids
+        canceled_order_ids,
+        exchange_filled_prices
       ) do
     new_orders =
       placed_orders
       |> Enum.filter(fn %Order{source_strategy: s} -> s == strategy_name end)
 
     new_positions = %ExchangePositions{
-      holdings: holdings,
+      holdings: update_holdings_from_filled_orders(holdings, orders, exchange_filled_prices),
       orders:
         Enum.filter(orders ++ new_orders, fn %Order{id: id} ->
           id not in filled_order_ids and id not in canceled_order_ids
@@ -359,6 +368,69 @@ defmodule Trader.Alpaca.Alpaca do
     end
 
     new_positions
+  end
+
+  def update_holdings_from_filled_orders(holdings, orders, exchange_filled_prices) do
+    filled_order_values =
+      orders
+      |> Enum.filter(fn %Order{id: id} -> Map.has_key?(exchange_filled_prices, id) end)
+      |> Enum.map(fn %Order{id: id, amount: amt_str} = o ->
+        {o, PriceUtil.as_float(Map.get(exchange_filled_prices, id)) * PriceUtil.as_float(amt_str)}
+      end)
+
+    cash_delta =
+      filled_order_values
+      |> Enum.map(fn
+        {%Order{order_type: t}, value} when t == :MARKET_BUY or t == :LIMIT_BUY ->
+          -1 * value
+
+        {%Order{order_type: t}, value} when t == :MARKET_SELL or t == :LIMIT_SELL ->
+          value
+      end)
+      |> Enum.sum()
+
+    holdings
+    |> Enum.map(fn
+      %ProductHolding{
+        amount: amount_str,
+        product: %Product{product_type: :CURRENCY, product_name: "USD"}
+      } = cash_holding ->
+        %ProductHolding{
+          cash_holding
+          | amount: to_string(PriceUtil.as_float(amount_str) + cash_delta)
+        }
+
+      %ProductHolding{
+        amount: amount_str,
+        product: %Product{product_type: :STONK, product_name: ticker}
+      } = stonk_holding ->
+        added =
+          filled_order_values
+          |> Enum.map(fn
+            {%Order{amount: amt_str, buy_product: %Product{product_name: ^ticker}}, _} ->
+              PriceUtil.as_float(amt_str)
+
+            _ ->
+              0
+          end)
+          |> Enum.sum()
+
+        subtracted =
+          filled_order_values
+          |> Enum.map(fn
+            {%Order{amount: amt_str, sell_product: %Product{product_name: ^ticker}}, _} ->
+              PriceUtil.as_float(amt_str)
+
+            _ ->
+              0
+          end)
+          |> Enum.sum()
+
+        %ProductHolding{
+          stonk_holding
+          | amount: to_string(PriceUtil.as_float(amount_str) + added - subtracted)
+        }
+    end)
   end
 
   def allocate_holdings_to_active_strategies(holdings) do
