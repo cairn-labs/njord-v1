@@ -13,13 +13,12 @@ import numpy as np
 
 
 MINIMUM_TOTAL_SCORE = 100
-MINIMUM_RSQUARED = 0.6
+MINIMUM_RSQUARED = 0.5
 MAXIMUM_PERCENT_ZEROS = 0.3
 
 
 class SubredditTickerMentionMomentumModel(PricePredictionModel):
-    """This model just predicts that a given stock will be worth TEN MILLION DOLLARS,
-    giving a strategy a very strong signal to buy said stock.
+    """Literally just buys or sells depending on if a stonk is being talked about more or less.
     """
     @staticmethod
     def name():
