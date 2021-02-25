@@ -1,0 +1,25 @@
+# proto-file: trading_strategy.proto
+# proto-message: TradingStrategy
+
+name: "wsb_momentum_strategy"
+capital_allocation: 1.0
+cadence_ms: 7200000  # 2 hours
+schedule: ALL
+prediction_model_config {
+  name: "subreddit_ticker_mention_momentum"
+  frame_config {
+    frame_width_ms: 10800000  # 6 hours
+    feature_configs {
+      data_point_type: SUBREDDIT_TOP_LISTING
+      bucketing_strategy: EARLIEST
+      bucket_width_ms: 1800000  # 30 minutes
+      vectorization_strategy: WEIGHTED_BAG_OF_WORDS
+      subreddit_top_listing_config {
+        subreddit_name: "wallstreetbets"
+      }
+    }
+  }
+  label_config {
+    prediction_delay_ms: 120000
+  }
+}

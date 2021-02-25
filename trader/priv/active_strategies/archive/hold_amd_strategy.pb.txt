@@ -1,8 +1,8 @@
 # proto-file: trading_strategy.proto
 # proto-message: TradingStrategy
 
-name: "hold_pltr_strategy"
-capital_allocation: 0.5
+name: "hold_amd_strategy"
+capital_allocation: 0.1
 cadence_ms: 60000
 prediction_model_config {
   name: "stonk_to_the_moon"
@@ -14,7 +14,7 @@ prediction_model_config {
       bucket_width_ms: 600000
       vectorization_strategy: PRICE_ONLY
       stonk_aggregate_config {
-        ticker: "PLTR"
+        ticker: "AMD"
       }
     }
   }
