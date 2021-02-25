@@ -37,8 +37,10 @@ class SubredditTickerMentionMomentumModel(PricePredictionModel):
         target_timestamp = timestamps[-1] + self.prediction_delay_ms_
 
         ticker_trajectories = {}
+        total_counts = []
         for idx, window in enumerate(vectorized[0]):
             added_this_tick = set()
+            total_counts.append(sum(int(c) for _, c in window))
             for t, c in window:
                 if t in TOP_STONKS:
                     added_this_tick.add(t)
@@ -56,7 +58,8 @@ class SubredditTickerMentionMomentumModel(PricePredictionModel):
             if (sum(counts_over_time) < MINIMUM_TOTAL_SCORE
                     or counts_over_time.count(0)/len(counts_over_time) > MAXIMUM_PERCENT_ZEROS):
                 continue
-            result = linregress(timestamps, counts_over_time)
+            incidence = [c/t for c, t in zip(counts_over_time, total_counts)]
+            result = linregress(timestamps, incidence)
             if result.rvalue**2 < MINIMUM_RSQUARED:
                 continue
 
