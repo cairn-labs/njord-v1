@@ -1,7 +1,7 @@
 defmodule Trader.Alpaca.AlpacaApi do
   require Logger
 
-  @max_retries 5
+  @max_retries 10
   @initial_retry_pause_ms 2000
 
   def call(api, method, endpoint, opts \\ []) do

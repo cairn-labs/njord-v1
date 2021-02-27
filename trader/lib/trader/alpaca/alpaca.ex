@@ -30,7 +30,7 @@ defmodule Trader.Alpaca.Alpaca do
 
   def current_positions() do
     stonks =
-      Api.call(:trading, :GET, "v2/positions")
+      Api.call(:trading, :GET, "v2/positions", retry: true)
       |> Api.parse_response()
       |> Enum.filter(fn
         %{"side" => "long", "asset_class" => "us_equity"} -> true
