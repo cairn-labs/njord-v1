@@ -4,7 +4,7 @@
 name: "wsb_momentum_strategy"
 capital_allocation: 1.0
 cadence_ms: 7200000  # 2 hours
-schedule: ALL
+schedule: MARKET_HOURS
 prediction_model_config {
   name: "subreddit_ticker_mention_momentum"
   frame_config {
