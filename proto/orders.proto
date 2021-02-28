@@ -8,6 +8,7 @@ enum OrderType {
     LIMIT_BUY = 3;
     LIMIT_SELL = 4;
     CANCEL_ORDER = 5;
+    SELL_STOP = 6;
 }
 
 enum OrderStatus {
@@ -28,12 +29,11 @@ message Order {
     string amount = 12;
     OrderStatus status = 6;
 
-    // For MARKET_BUY orders: if take_profit_percent is set, add a market sell order X%
-    // above the buy price. If stop_loss_percent is set, add a stop market order Y% below
-    // the buy price. These are implemented using Alpaca's bracket order functionality
-    // (see https://alpaca.markets/docs/trading-on-alpaca/orders/)
-    float take_profit_percent = 14;
-    float stop_loss_percent = 15;
+    // For MARKET_BUY orders: if take_profit_price is set, add a limit sell order at this
+    // price. If stop_loss_price is set, add a stop market order at this price. These are
+    // implemented using Alpaca's bracket order functionality (https://alpaca.markets/docs/trading-on-alpaca/orders/)
+    float take_profit_price = 14;
+    float stop_loss_price = 15;
 
     // If set, don't execute this order until all parent orders have been filled
     repeated string parent_order_ids = 10;

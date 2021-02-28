@@ -242,8 +242,16 @@ defmodule Trader.Orders.StonkOrderCompiler do
         ),
       status: :DRAFT,
       parent_order_ids: parent_order_ids,
-      take_profit_percent: strategy.take_profit_percent,
-      stop_loss_percent: strategy.stop_loss_percent
+      take_profit_price:
+        if(strategy.take_profit_percent != 0,
+          do: (1 + strategy.take_profit_percent) * current_price,
+          else: 0.0
+        ),
+      stop_loss_price:
+        if(strategy.stop_loss_percent != 0,
+          do: (1 - strategy.stop_loss_percent) * current_price,
+          else: 0.0
+        )
     )
   end
 

@@ -117,8 +117,13 @@ defmodule Trader.Alpaca.MockAlpaca do
   end
 
   @impl true
-  def handle_call({:set_timestamp, timestamp}, _from, state) do
+  def handle_call(
+        {:set_timestamp, timestamp},
+        _from,
+        %{positions: %ExchangePositions{orders: orders}} = state
+      ) do
     Logger.debug("Mock Alpaca exchange time set to #{timestamp}")
+    Logger.info("Pending orders: #{inspect(orders)}")
     {:reply, :ok, %{state | timestamp: timestamp}}
   end
 
@@ -171,8 +176,10 @@ defmodule Trader.Alpaca.MockAlpaca do
            amount: amount_str
          } = order},
         _from,
-        %{positions: %ExchangePositions{holdings: holdings} = positions, timestamp: timestamp} =
-          state
+        %{
+          positions: %ExchangePositions{holdings: holdings, orders: orders} = positions,
+          timestamp: timestamp
+        } = state
       ) do
     price = get_price(ticker, timestamp)
 
@@ -188,7 +195,13 @@ defmodule Trader.Alpaca.MockAlpaca do
 
     Logger.debug("New holdings: #{inspect(new_holdings)}")
 
-    {:reply, :ok, %{state | positions: %ExchangePositions{positions | holdings: new_holdings}}}
+    new_orders = orders ++ bracket_orders(order)
+
+    {:reply, :ok,
+     %{
+       state
+       | positions: %ExchangePositions{positions | holdings: new_holdings, orders: new_orders}
+     }}
   end
 
   ###################
@@ -242,5 +255,43 @@ defmodule Trader.Alpaca.MockAlpaca do
       "#{ticker}-#{@aggregate_width}",
       timestamp
     )
+  end
+
+  defp bracket_orders(%Order{
+         order_type: :MARKET_BUY,
+         buy_product: product,
+         amount: amount_str,
+         take_profit_price: take_profit_price,
+         stop_loss_price: stop_loss_price
+       }) do
+    take_profit_order =
+      if take_profit_price != 0 do
+        Order.new(
+          id: UUID.uuid4(),
+          order_type: :LIMIT_SELL,
+          sell_product: product,
+          amount: amount_str,
+          price: to_string(take_profit_price),
+          status: :PLACED
+        )
+      else
+        nil
+      end
+
+    stop_loss_order =
+      if stop_loss_price != 0 do
+        Order.new(
+          id: UUID.uuid4(),
+          order_type: :SELL_STOP,
+          sell_product: product,
+          amount: amount_str,
+          price: to_string(stop_loss_price),
+          status: :PLACED
+        )
+      else
+        nil
+      end
+
+    Enum.filter([take_profit_order, stop_loss_order], fn x -> x != nil end)
   end
 end
