@@ -120,10 +120,12 @@ defmodule Trader.Alpaca.MockAlpaca do
   def handle_call(
         {:set_timestamp, timestamp},
         _from,
-        %{positions: %ExchangePositions{orders: orders}} = state
+        %{positions: %ExchangePositions{orders: orders}, timestamp: previous_timestamp} = state
       ) do
     Logger.debug("Mock Alpaca exchange time set to #{timestamp}")
     Logger.info("Pending orders: #{inspect(orders)}")
+    # TODO: next step is looping through pending orders and filling them if they
+    # would have been filled between previous timestamp and current timestamp
     {:reply, :ok, %{state | timestamp: timestamp}}
   end
 
@@ -201,6 +203,32 @@ defmodule Trader.Alpaca.MockAlpaca do
      %{
        state
        | positions: %ExchangePositions{positions | holdings: new_holdings, orders: new_orders}
+     }}
+  end
+
+  @impl true
+  def handle_call(
+        {:submit_order,
+         %Order{
+           order_type: :CANCEL_ORDER,
+           target_order_id: target_order_id
+         } = order},
+        _from,
+        %{
+          positions: %ExchangePositions{orders: orders} = positions
+        } = state
+      ) do
+    {:reply, :ok,
+     %{
+       state
+       | positions: %ExchangePositions{
+           positions
+           | orders:
+               Enum.filter(orders, fn
+                 %Order{id: ^target_order_id} -> false
+                 _ -> true
+               end)
+         }
      }}
   end
 
