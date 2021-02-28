@@ -26,6 +26,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
   @sell_order_assumed_liquidity 0.95
 
   def get_orders(
+        strategy,
         %ExchangePositions{} = current_positions,
         prices,
         %Prediction{labels: labels} = prediction
@@ -43,7 +44,8 @@ defmodule Trader.Orders.StonkOrderCompiler do
           current_positions,
           prices,
           labels,
-          down_prediction_sell_orders ++ no_prediction_sell_orders
+          down_prediction_sell_orders ++ no_prediction_sell_orders,
+          strategy
         )
 
       OrderTree.new(
@@ -184,7 +186,8 @@ defmodule Trader.Orders.StonkOrderCompiler do
         %ExchangePositions{holdings: holdings, orders: orders} = current_positions,
         prices,
         labels,
-        draft_sell_orders
+        draft_sell_orders,
+        strategy
       ) do
     cash_holding =
       Enum.find(
@@ -222,20 +225,26 @@ defmodule Trader.Orders.StonkOrderCompiler do
        )}
     end)
     |> Enum.map(fn {ticker, amount_to_buy} ->
-      Order.new(
-        id: UUID.uuid4(),
-        order_type: :MARKET_BUY,
-        amount: "#{amount_to_buy}",
-        buy_product:
-          Product.new(
-            product_type: :STONK,
-            product_name: ticker
-          ),
-        status: :DRAFT,
-        parent_order_ids: sell_order_ids
-      )
+      create_buy_order(ticker, amount_to_buy, sell_order_ids, Map.get(prices, ticker), strategy)
     end)
     |> remove_zero_orders
+  end
+
+  defp create_buy_order(ticker, amount_to_buy, parent_order_ids, current_price, strategy) do
+    Order.new(
+      id: UUID.uuid4(),
+      order_type: :MARKET_BUY,
+      amount: "#{amount_to_buy}",
+      buy_product:
+        Product.new(
+          product_type: :STONK,
+          product_name: ticker
+        ),
+      status: :DRAFT,
+      parent_order_ids: parent_order_ids,
+      take_profit_percent: strategy.take_profit_percent,
+      stop_loss_percent: strategy.stop_loss_percent
+    )
   end
 
   defp get_order_presumed_liquidity(

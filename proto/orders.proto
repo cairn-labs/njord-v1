@@ -27,9 +27,13 @@ message Order {
     string price = 5;
     string amount = 12;
     OrderStatus status = 6;
-    uint64 placed_timestamp = 7;
-    uint64 expiration_timestamp = 8;
-    uint64 filled_timestamp = 9;
+
+    // For MARKET_BUY orders: if take_profit_percent is set, add a market sell order X%
+    // above the buy price. If stop_loss_percent is set, add a stop market order Y% below
+    // the buy price. These are implemented using Alpaca's bracket order functionality
+    // (see https://alpaca.markets/docs/trading-on-alpaca/orders/)
+    float take_profit_percent = 14;
+    float stop_loss_percent = 15;
 
     // If set, don't execute this order until all parent orders have been filled
     repeated string parent_order_ids = 10;

@@ -58,13 +58,14 @@ defmodule Trader.Runners.LiveRunner do
                          frame_config: %FrameConfig{frame_width_ms: frame_width}
                        } = prediction_config,
                      name: strategy_name
-                   } ->
-      %Prediction{
-        Trader.Analyst.predict_price(get_window_start(frame_width), prediction_config)
-        | strategy_name: strategy_name
-      }
+                   } = strategy ->
+      {strategy,
+       %Prediction{
+         Trader.Analyst.predict_price(get_window_start(frame_width), prediction_config)
+         | strategy_name: strategy_name
+       }}
     end)
-    |> Enum.each(fn p -> Trader.Orders.OrderCreation.submit_orders(p, :live) end)
+    |> Enum.each(fn {strat, p} -> Trader.Orders.OrderCreation.submit_orders(strat, p, :live) end)
 
     pid = self()
     spawn(fn -> Process.send_after(pid, :tick, tick_width_ms) end)

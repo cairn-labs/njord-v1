@@ -96,13 +96,16 @@ defmodule Trader.Runners.BacktestRunner do
       |> Enum.map(fn %TradingStrategy{
                        prediction_model_config: prediction_config,
                        name: strategy_name
-                     } ->
-        %Prediction{
-          Trader.Analyst.predict_price(window_start, prediction_config)
-          | strategy_name: strategy_name
-        }
+                     } = strat ->
+        {strat,
+         %Prediction{
+           Trader.Analyst.predict_price(window_start, prediction_config)
+           | strategy_name: strategy_name
+         }}
       end)
-      |> Enum.each(fn p -> Trader.Orders.OrderCreation.submit_orders(p, :backtest) end)
+      |> Enum.each(fn {strat, p} ->
+        Trader.Orders.OrderCreation.submit_orders(strat, p, :backtest)
+      end)
 
     {:reply, :ok, state}
   end

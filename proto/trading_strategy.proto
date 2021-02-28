@@ -8,8 +8,24 @@ enum TradingSchedule {
 
 message TradingStrategy {
     string name = 1;
+
+    // Run this strategy on X% of available capital. For example, setting capital
+    // allocation to 0.4 would allocate 40% of the portfolio to this strategy.
     float capital_allocation = 2;
+
+    // Run the strategy once every X milliseconds
     int32 cadence_ms = 3;
+
+    // If set, add a stop loss order at current price - X% immediately after buying
+    // due to a positive prediction. For example, setting stop_loss_percent = 0.02
+    // would add stop loss orders at -2% of buy price.
+    float stop_loss_percent = 6;
+
+    // If set, add a limit sell order at current price + X% immediately after buying
+    // due to a positive prediction. For example, setting take_profit_percent = 0.1
+    // would add limit sell orders at +10% of buy price.
+    float take_profit_percent = 7;
+
     TradingSchedule schedule = 5;
     PredictionModelConfig prediction_model_config = 4;
 }
