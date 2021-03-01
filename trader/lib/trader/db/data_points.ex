@@ -256,4 +256,24 @@ defmodule Trader.Db.DataPoints do
     |> Enum.map(fn [data_type, count] -> {DataPointType.key(data_type), count} end)
     |> Enum.into(%{})
   end
+
+  def price_crossing_timestamp(:STONK_PRICE, selector, price, above_or_below, start_ts, end_ts) do
+    type = DataPointType.mapping()[:STONK_AGGREGATE]
+
+    operator =
+      case above_or_below do
+        :above -> ">="
+        :below -> "<="
+      end
+
+    query = """
+    SELECT time FROM data WHERE data_type = $1 AND time >= $2 AND time < $3
+    AND price #{operator} $4 AND selector = $5 ORDER BY time ASC LIMIT 1
+    """
+
+    case SQL.query(Repo, query, [type, start_ts, end_ts, price, selector]) do
+      {:ok, %{rows: []}} -> nil
+      {:ok, %{rows: [[p]]}} -> p
+    end
+  end
 end

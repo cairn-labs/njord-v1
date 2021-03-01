@@ -120,13 +120,11 @@ defmodule Trader.Alpaca.MockAlpaca do
   def handle_call(
         {:set_timestamp, timestamp},
         _from,
-        %{positions: %ExchangePositions{orders: orders}, timestamp: previous_timestamp} = state
+        %{positions: positions, timestamp: previous_timestamp} = state
       ) do
     Logger.debug("Mock Alpaca exchange time set to #{timestamp}")
-    Logger.info("Pending orders: #{inspect(orders)}")
-    # TODO: next step is looping through pending orders and filling them if they
-    # would have been filled between previous timestamp and current timestamp
-    {:reply, :ok, %{state | timestamp: timestamp}}
+    new_positions = fill_orders_between_times(positions, previous_timestamp, timestamp)
+    {:reply, :ok, %{state | timestamp: timestamp, positions: new_positions}}
   end
 
   @impl true
@@ -321,5 +319,101 @@ defmodule Trader.Alpaca.MockAlpaca do
       end
 
     Enum.filter([take_profit_order, stop_loss_order], fn x -> x != nil end)
+  end
+
+  defp fill_orders_between_times(
+         %ExchangePositions{holdings: holdings, orders: orders} = positions,
+         previous_timestamp,
+         timestamp
+       ) do
+    {new_holdings, filled_tickers} =
+      orders
+      |> Enum.map(fn
+        %Order{
+          order_type: :LIMIT_SELL,
+          sell_product: %Product{product_name: ticker},
+          price: price_str
+        } = o ->
+          {o,
+           Db.DataPoints.price_crossing_timestamp(
+             :STONK_PRICE,
+             "#{ticker}-#{@aggregate_width}",
+             PriceUtil.as_float(price_str),
+             :above,
+             previous_timestamp,
+             timestamp
+           )}
+
+        %Order{
+          order_type: :SELL_STOP,
+          sell_product: %Product{product_name: ticker},
+          price: price_str
+        } = o ->
+          {o,
+           Db.DataPoints.price_crossing_timestamp(
+             :STONK_PRICE,
+             "#{ticker}-#{@aggregate_width}",
+             PriceUtil.as_float(price_str),
+             :below,
+             previous_timestamp,
+             timestamp
+           )}
+      end)
+      |> Enum.filter(fn
+        {_, nil} -> false
+        _ -> true
+      end)
+      |> Enum.group_by(fn {o, _} ->
+        if o.buy_product == nil, do: o.sell_product.product_name, else: o.buy_product.product_name
+      end)
+      |> Enum.map(fn {_ticker, data} ->
+        {o, _} = Enum.min_by(data, fn {_, ts} -> ts end)
+        o
+      end)
+      |> Enum.reduce({positions, MapSet.new()}, &fill_order/2)
+
+    %ExchangePositions{
+      new_holdings
+      | orders:
+          Enum.filter(new_holdings.orders, fn
+            %Order{buy_product: nil, sell_product: sell_product} ->
+              not MapSet.member?(filled_tickers, sell_product.product_name)
+
+            %Order{buy_product: buy_product, sell_product: nil} ->
+              not MapSet.member?(filled_tickers, buy_product.product_name)
+          end)
+    }
+  end
+
+  defp fill_order(
+         %Order{
+           id: order_id,
+           order_type: order_type,
+           sell_product: product,
+           price: price_str,
+           amount: amount_str
+         } = order,
+         {%ExchangePositions{holdings: holdings, orders: orders}, filled_tickers}
+       )
+       when order_type == :SELL_STOP or order_type == :LIMIT_SELL do
+    price = PriceUtil.as_float(price_str)
+    amount = PriceUtil.as_float(amount_str)
+
+    Logger.info(
+      "#{Atom.to_string(order_type)} #{product.product_name}: #{amount_str} @ $#{price}"
+    )
+
+    new_holdings =
+      holdings
+      |> add_to_holding(
+        %Product{product_type: :CURRENCY, product_name: "USD"},
+        amount * price
+      )
+      |> add_to_holding(product, -1 * amount)
+
+    new_orders = Enum.filter(orders, fn %Order{id: id} -> id != order_id end)
+
+    {ExchangePositions.new(holdings: new_holdings, orders: new_orders),
+     MapSet.put(filled_tickers, product.product_name)}
   end
 end
