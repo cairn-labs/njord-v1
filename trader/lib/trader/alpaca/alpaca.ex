@@ -118,17 +118,36 @@ defmodule Trader.Alpaca.Alpaca do
             %Product{
               product_name: ticker
             } = product,
-          amount: amount_str
+          amount: amount_str,
+          take_profit_price: take_profit_price,
+          stop_loss_price: stop_loss_price
         } = order
       ) do
-    %{
-      symbol: ticker,
-      qty: amount_str,
-      side: "buy",
-      type: "market",
-      time_in_force: "gtc",
-      client_order_id: order_id
-    }
+    order =
+      %{
+        symbol: ticker,
+        qty: amount_str,
+        side: "buy",
+        type: "market",
+        time_in_force: "gtc",
+        client_order_id: order_id
+      }
+
+    order =
+      if take_profit_price != 0 do
+        Map.put(order, :take_profit, %{limit_price: take_profit_price})
+      else
+        order
+      end
+
+    order =
+      if stop_loss_price != 0 do
+        Map.put(order, :stop_loss, %{stop_price: stop_loss_price})
+      else
+        order
+      end
+
+    order
   end
 
   def order_request_object(%Order{
