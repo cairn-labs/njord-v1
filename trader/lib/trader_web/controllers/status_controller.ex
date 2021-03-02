@@ -4,12 +4,19 @@ defmodule TraderWeb.StatusController do
   require Logger
 
   def get_status(conn, params) do
-    results =
+    data_counts =
       Trader.Db.DataPoints.counts_by_type_in_window(
         DateTime.utc_now() |> DateTime.add(-60 * 60, :second),
         DateTime.utc_now()
       )
 
-    ApiUtil.send_success(conn, %{"collected_in_past_hour" => results})
+    positions_by_strategy =
+      Trader.Alpaca.Alpaca.active_strategies()
+      |> Enum.map(fn name -> {name, Trader.Alpaca.Alpaca.current_positions(name)} end)
+
+    ApiUtil.send_success(conn, %{
+      "collected_in_past_hour" => data_counts,
+      "strategies" => positions_by_strategy
+    })
   end
 end

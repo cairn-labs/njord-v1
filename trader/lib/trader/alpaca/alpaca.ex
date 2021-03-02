@@ -28,6 +28,10 @@ defmodule Trader.Alpaca.Alpaca do
     |> Map.get("price", nil)
   end
 
+  def active_strategies() do
+    GenServer.call(__MODULE__, :active_strategies)
+  end
+
   def current_positions() do
     stonks =
       Api.call(:trading, :GET, "v2/positions", retry: true)
@@ -123,15 +127,14 @@ defmodule Trader.Alpaca.Alpaca do
           stop_loss_price: stop_loss_price
         } = order
       ) do
-    order =
-      %{
-        symbol: ticker,
-        qty: amount_str,
-        side: "buy",
-        type: "market",
-        time_in_force: "gtc",
-        client_order_id: order_id
-      }
+    order = %{
+      symbol: ticker,
+      qty: amount_str,
+      side: "buy",
+      type: "market",
+      time_in_force: "gtc",
+      client_order_id: order_id
+    }
 
     order =
       if take_profit_price != 0 do
@@ -335,6 +338,10 @@ defmodule Trader.Alpaca.Alpaca do
         %{strategy_positions: strategy_positions} = state
       ) do
     {:reply, Map.get(strategy_positions, strategy_name), state}
+  end
+
+  def handle_call(:active_strategies, _from, %{strategy_positions: strategy_positions} = state) do
+    {:reply, Map.keys(strategy_positions), state}
   end
 
   def update_strategy_positions(
