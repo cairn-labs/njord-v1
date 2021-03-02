@@ -2,11 +2,11 @@
 # proto-message: TradingStrategy
 
 name: "wsb_momentum_strategy"
-capital_allocation: 1.0
-# cadence_ms: 720000  # 0.2 hours
-cadence_ms: 60000  # just for testing
+capital_allocation: 0.5
+cadence_ms: 720000  # 0.2 hours
+# cadence_ms: 60000  # just for testing
 schedule: ALL
-stop_loss_percent: 0.05
+# stop_loss_percent: 0.05
 prediction_model_config {
   name: "subreddit_ticker_mention_momentum"
   frame_config {

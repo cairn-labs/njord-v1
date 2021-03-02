@@ -2,8 +2,9 @@
 # proto-message: TradingStrategy
 
 name: "hold_amd_strategy"
-capital_allocation: 0.1
-cadence_ms: 60000
+capital_allocation: 0.4
+cadence_ms: 3600000  # one hour
+schedule: MARKET_HOURS
 prediction_model_config {
   name: "stonk_to_the_moon"
   frame_config {
