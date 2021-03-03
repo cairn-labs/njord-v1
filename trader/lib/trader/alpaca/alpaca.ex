@@ -415,48 +415,91 @@ defmodule Trader.Alpaca.Alpaca do
       end)
       |> Enum.sum()
 
-    holdings
-    |> Enum.map(fn
-      %ProductHolding{
-        amount: amount_str,
-        product: %Product{product_type: :CURRENCY, product_name: "USD"}
-      } = cash_holding ->
+    updated_holdings =
+      holdings
+      |> Enum.map(fn
         %ProductHolding{
-          cash_holding
-          | amount: to_string(PriceUtil.as_float(amount_str) + cash_delta)
-        }
-
-      %ProductHolding{
-        amount: amount_str,
-        product: %Product{product_type: :STONK, product_name: ticker}
-      } = stonk_holding ->
-        added =
-          filled_order_values
-          |> Enum.map(fn
-            {%Order{amount: amt_str, buy_product: %Product{product_name: ^ticker}}, _} ->
-              PriceUtil.as_float(amt_str)
-
-            _ ->
-              0
-          end)
-          |> Enum.sum()
-
-        subtracted =
-          filled_order_values
-          |> Enum.map(fn
-            {%Order{amount: amt_str, sell_product: %Product{product_name: ^ticker}}, _} ->
-              PriceUtil.as_float(amt_str)
-
-            _ ->
-              0
-          end)
-          |> Enum.sum()
+          amount: amount_str,
+          product: %Product{product_type: :CURRENCY, product_name: "USD"}
+        } = cash_holding ->
+          %ProductHolding{
+            cash_holding
+            | amount: to_string(PriceUtil.as_float(amount_str) + cash_delta)
+          }
 
         %ProductHolding{
-          stonk_holding
-          | amount: to_string(PriceUtil.as_float(amount_str) + added - subtracted)
-        }
-    end)
+          amount: amount_str,
+          product: %Product{product_type: :STONK, product_name: ticker}
+        } = stonk_holding ->
+          added =
+            filled_order_values
+            |> Enum.map(fn
+              {%Order{amount: amt_str, buy_product: %Product{product_name: ^ticker}}, _} ->
+                PriceUtil.as_float(amt_str)
+
+              _ ->
+                0
+            end)
+            |> Enum.sum()
+
+          subtracted =
+            filled_order_values
+            |> Enum.map(fn
+              {%Order{amount: amt_str, sell_product: %Product{product_name: ^ticker}}, _} ->
+                PriceUtil.as_float(amt_str)
+
+              _ ->
+                0
+            end)
+            |> Enum.sum()
+
+          %ProductHolding{
+            stonk_holding
+            | amount: to_string(PriceUtil.as_float(amount_str) + added - subtracted)
+          }
+      end)
+
+    # Now go through and add any holdings that weren't in the list already
+
+    new_holdings =
+      filled_order_values
+      |> Enum.flat_map(fn
+        {
+          %Order{
+            amount: amt_str,
+            buy_product: %Product{product_name: ticker, product_type: :STONK}
+          },
+          _
+        } ->
+          [{ticker, PriceUtil.as_float(amt_str)}]
+
+        {%Order{
+           amount: amt_str,
+           sell_product: %Product{product_name: ticker, product_type: :STONK}
+         }, _} ->
+          [{ticker, -1 * PriceUtil.as_float(amt_str)}]
+
+        _ ->
+          []
+      end)
+      |> Enum.group_by(fn {t, _} -> t end)
+      |> Enum.map(fn {t, data} -> {t, data |> Enum.map(fn {t, amt} -> amt end) |> Enum.sum()} end)
+      |> Enum.flat_map(fn {ticker, delta} ->
+        case Enum.find(holdings, fn p -> p.product_type == :STONK and p.product_name == ticker end) do
+          nil ->
+            [
+              ProductHolding.new(
+                product: Product.new(product_type: :STONK, product_name: ticker),
+                amount: to_string(delta)
+              )
+            ]
+
+          _ ->
+            []
+        end
+      end)
+
+    new_holdings ++ updated_holdings
   end
 
   def allocate_holdings_to_active_strategies(holdings) do
