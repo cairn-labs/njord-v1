@@ -2,7 +2,7 @@
 # proto-message: TradingStrategy
 
 name: "wsb_momentum_strategy"
-capital_allocation: 0.5
+capital_allocation: 0.15
 cadence_ms: 720000  # 0.2 hours
 # cadence_ms: 60000  # just for testing
 schedule: MARKET_HOURS

@@ -60,7 +60,9 @@ defmodule Trader.Strategies do
 
         case {Time.compare(open, current), Time.compare(current, close)} do
           {:lt, :lt} -> true
-          _ -> false
+          _ ->
+            Logger.info("Strategy set to run during market hours; current time is #{inspect(current)} ET. Waiting until market open at #{inspect(open)} ET")
+            false
         end
     end
   end
