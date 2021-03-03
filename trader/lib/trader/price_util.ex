@@ -51,4 +51,12 @@ defmodule Trader.PriceUtil do
       _ -> nil
     end
   end
+
+  def clip(value, min, nil) when value > min, do: value
+  def clip(value, min, nil) when value <= min, do: min
+  def clip(value, nil, max) when value < max, do: value
+  def clip(value, nil, max) when value >= max, do: max
+  def clip(value, min, max) when value < min, do: min
+  def clip(value, min, max) when value > max, do: max
+  def clip(value, _min, _max), do: value
 end

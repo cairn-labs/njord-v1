@@ -200,7 +200,7 @@ defmodule Trader.Orders.StonkOrderCompiler do
 
     available_cash =
       case cash_holding do
-        %ProductHolding{amount: amount_str} -> PriceUtil.as_float(amount_str)
+        %ProductHolding{amount: amount_str} -> PriceUtil.clip(PriceUtil.as_float(amount_str), 0, nil)
         _ -> 0
       end
 
