@@ -13,6 +13,7 @@ defmodule TraderWeb.StatusController do
     positions_by_strategy =
       Trader.Alpaca.Alpaca.active_strategies()
       |> Enum.map(fn name -> {name, Trader.Alpaca.Alpaca.current_positions(name)} end)
+      |> Enum.into(%{})
 
     ApiUtil.send_success(conn, %{
       "collected_in_past_hour" => data_counts,
