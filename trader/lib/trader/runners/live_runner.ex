@@ -49,8 +49,8 @@ defmodule Trader.Runners.LiveRunner do
         %{tick_width_ms: tick_width_ms, tick: tick, strategies: strategies} = state
       ) do
     strategies
-    |> Enum.filter(fn %TradingStrategy{cadence_ms: cadence} ->
-      rem(tick * tick_width_ms, cadence) == 0
+    |> Enum.filter(fn %TradingStrategy{cadence_ms: cadence} = strat ->
+      rem(tick * tick_width_ms, cadence) == 0 and Trader.Strategies.is_schedulable?(strat, DateTime.utc_now())
     end)
     |> Enum.map(fn %TradingStrategy{
                      prediction_model_config:
