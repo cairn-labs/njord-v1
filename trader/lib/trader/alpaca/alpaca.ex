@@ -485,7 +485,7 @@ defmodule Trader.Alpaca.Alpaca do
       |> Enum.group_by(fn {t, _} -> t end)
       |> Enum.map(fn {t, data} -> {t, data |> Enum.map(fn {t, amt} -> amt end) |> Enum.sum()} end)
       |> Enum.flat_map(fn {ticker, delta} ->
-        case Enum.find(holdings, fn p -> p.product_type == :STONK and p.product_name == ticker end) do
+        case Enum.find(holdings, fn p -> p.product.product_type == :STONK and p.product.product_name == ticker end) do
           nil ->
             [
               ProductHolding.new(
