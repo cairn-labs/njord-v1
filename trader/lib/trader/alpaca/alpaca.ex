@@ -499,7 +499,8 @@ defmodule Trader.Alpaca.Alpaca do
         end
       end)
 
-    new_holdings ++ updated_holdings
+    (new_holdings ++ updated_holdings)
+    |> Enum.filter(fn %ProductHolding{amount: amt_str} -> PriceUtil.as_float(amt_str) != 0 end)
   end
 
   def allocate_holdings_to_active_strategies(holdings) do
