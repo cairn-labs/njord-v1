@@ -61,6 +61,10 @@ defmodule Trader.Alpaca.AlpacaApi do
 
   defp retry_if_necessary(request, past_retries, current_sleep) do
     case request.() do
+      {:ok, %HTTPoison.Response{status_code: code}} when code >= 300 ->
+        :timer.sleep(current_sleep)
+        retry_if_necessary(request, past_retries + 1, current_sleep * 2)
+
       {:ok, result} ->
         result
 
