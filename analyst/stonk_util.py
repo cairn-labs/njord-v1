@@ -14,4 +14,4 @@ TOP_STONKS = ["aal", "aapl", "abbv", "abt", "acb", "aes", "afl", "agnc", "aiki",
               "spy", "sq", "sqqq", "srne", "su", "swn", "syf", "teva", "tfc", "tjx", "tlry", "tlt", "tmus", "tqqq",
               "trch", "trip", "tsla", "tsm", "twlo", "twtr", "ual", "uber", "usb", "uvxy", "vale", "vg", "viac",
               "vlo", "vxx", "vz", "wba", "wdc", "wfc", "wmb", "wmt", "xlb", "xle", "xlf", "xli", "xlp", "xlu",
-              "xom", "xpev", "znga", "rkt"]
+              "xom", "xpev", "znga", "rkt", "uwmc", "skt"]

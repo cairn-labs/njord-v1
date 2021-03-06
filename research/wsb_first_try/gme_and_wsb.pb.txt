@@ -4,7 +4,7 @@
 frame_width_ms: 960000 # 16 minutes
 num_frames_requested: 100
 sample_start_date: "2021-02-17"
-sample_end_date: "2021-02-20"
+sample_end_date: "2021-03-05"
 feature_configs {
   data_point_type: STONK_AGGREGATE
   bucketing_strategy: EARLIEST
