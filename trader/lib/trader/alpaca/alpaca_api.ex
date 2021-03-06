@@ -3,6 +3,7 @@ defmodule Trader.Alpaca.AlpacaApi do
 
   @max_retries 10
   @initial_retry_pause_ms 2000
+  @max_retry_pause_ms 60000
 
   def call(api, method, endpoint, opts \\ []) do
     call(api, method, endpoint, "", opts)
@@ -61,16 +62,16 @@ defmodule Trader.Alpaca.AlpacaApi do
 
   defp retry_if_necessary(request, past_retries, current_sleep) do
     case request.() do
-      {:ok, %HTTPoison.Response{status_code: code}} when code >= 300 ->
+      {:ok, %HTTPoison.Response{status_code: code}} when code >= 500 ->
         :timer.sleep(current_sleep)
-        retry_if_necessary(request, past_retries + 1, current_sleep * 2)
+        retry_if_necessary(request, past_retries + 1, Trader.PriceUtil.clip(current_sleep * 2, nil, @max_retry_pause_ms))
 
       {:ok, result} ->
         result
 
       _ ->
         :timer.sleep(current_sleep)
-        retry_if_necessary(request, past_retries + 1, current_sleep * 2)
+        retry_if_necessary(request, past_retries + 1, Trader.PriceUtil.clip(current_sleep * 2, nil, @max_retry_pause_ms))
     end
   end
 
