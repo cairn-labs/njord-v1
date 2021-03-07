@@ -2,8 +2,13 @@ defmodule Trader.Db.Orders do
   alias Trader.Repo
   alias Ecto.Adapters.SQL
 
-  def log_order(%Order{source_strategy: strategy} = order, environment) do
-    timestamp = DateTime.utc_now()
+  def log_order(%Order{source_strategy: strategy} = order, environment, timestamp \\ nil) do
+    timestamp =
+      case timestamp do
+        nil -> DateTime.utc_now()
+        t -> t
+      end
+
     data = Order.encode(order)
 
     query = """

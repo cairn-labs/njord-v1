@@ -28,11 +28,11 @@ defmodule Trader.Alpaca.MockAlpaca do
     GenServer.call(__MODULE__, {:set_timestamp, timestamp})
   end
 
-  def execute_order_tree(%OrderTree{orders: orders}, _strategy_name) do
+  def execute_order_tree(%OrderTree{orders: orders}, strategy_name) do
     # Need to toposort these orders into stages. For now, just submit
     # them sequentially.
     for order <- orders do
-      submit_order(order)
+      submit_order(%Order{order | source_strategy: strategy_name})
     end
   end
 
@@ -150,6 +150,7 @@ defmodule Trader.Alpaca.MockAlpaca do
     price = get_price(ticker, timestamp)
 
     Logger.info("MARKET_SELL #{ticker}: #{amount_str} @ $#{price}")
+    Db.Orders.log_order(order, "backtest", timestamp)
 
     new_holdings =
       holdings
@@ -184,6 +185,7 @@ defmodule Trader.Alpaca.MockAlpaca do
     price = get_price(ticker, timestamp)
 
     Logger.info("MARKET_BUY #{ticker}: #{amount_str} @ $#{price}")
+    Db.Orders.log_order(order, "backtest", timestamp)
 
     new_holdings =
       holdings
@@ -370,7 +372,7 @@ defmodule Trader.Alpaca.MockAlpaca do
         {o, _} = Enum.min_by(data, fn {_, ts} -> ts end)
         o
       end)
-      |> Enum.reduce({positions, MapSet.new()}, &fill_order/2)
+      |> Enum.reduce({positions, MapSet.new()}, fn o, acc -> fill_order(o, acc, timestamp) end)
 
     %ExchangePositions{
       new_holdings
@@ -393,7 +395,8 @@ defmodule Trader.Alpaca.MockAlpaca do
            price: price_str,
            amount: amount_str
          } = order,
-         {%ExchangePositions{holdings: holdings, orders: orders}, filled_tickers}
+         {%ExchangePositions{holdings: holdings, orders: orders}, filled_tickers},
+         timestamp
        )
        when order_type == :SELL_STOP or order_type == :LIMIT_SELL do
     price = PriceUtil.as_float(price_str)
@@ -402,6 +405,8 @@ defmodule Trader.Alpaca.MockAlpaca do
     Logger.info(
       "#{Atom.to_string(order_type)} #{product.product_name}: #{amount_str} @ $#{price}"
     )
+
+    Db.Orders.log_order(order, "backtest", timestamp)
 
     new_holdings =
       holdings
