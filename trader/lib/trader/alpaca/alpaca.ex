@@ -306,6 +306,7 @@ defmodule Trader.Alpaca.Alpaca do
       |> Enum.split_with(fn %Order{id: id} -> id in filled_ids end)
 
     now_filled = mark_orders_as(now_filled, :FILLED)
+    log_filled_orders(now_filled)
 
     pid = self()
     delay = Application.get_env(:trader, __MODULE__)[:milliseconds_per_tick]
@@ -485,7 +486,9 @@ defmodule Trader.Alpaca.Alpaca do
       |> Enum.group_by(fn {t, _} -> t end)
       |> Enum.map(fn {t, data} -> {t, data |> Enum.map(fn {t, amt} -> amt end) |> Enum.sum()} end)
       |> Enum.flat_map(fn {ticker, delta} ->
-        case Enum.find(holdings, fn p -> p.product.product_type == :STONK and p.product.product_name == ticker end) do
+        case Enum.find(holdings, fn p ->
+               p.product.product_type == :STONK and p.product.product_name == ticker
+             end) do
           nil ->
             [
               ProductHolding.new(
@@ -572,5 +575,13 @@ defmodule Trader.Alpaca.Alpaca do
   def mark_orders_as(orders, status) do
     orders
     |> Enum.map(fn order -> %Order{order | status: status} end)
+  end
+
+  defp log_filled_orders(orders) do
+    environment = Application.get_env(:trader, __MODULE__)[:environment]
+
+    for order <- orders do
+      Db.Orders.log_order(order, environment)
+    end
   end
 end

@@ -29,7 +29,9 @@ config :trader, Trader.Repo,
   timeout: 600_000
 
 config :trader, Trader.Runners.LiveRunner, enable: true
+
 config :trader, Trader.Alpaca.Alpaca, enable: true
+
 config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 
 # ## SSL Support

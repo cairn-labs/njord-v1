@@ -72,6 +72,7 @@ config :trader, Trader.Runners.LiveRunner, enable: true
 
 config :trader, Trader.Alpaca.Alpaca,
   enable: true,
+  environment: "paper",
   milliseconds_per_tick: 2_000
 
 # Import environment specific config. This must remain at the bottom
