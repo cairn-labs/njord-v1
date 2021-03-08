@@ -30,9 +30,17 @@ config :trader, Trader.Repo,
 
 config :trader, Trader.Runners.LiveRunner, enable: true
 
-config :trader, Trader.Alpaca.Alpaca, enable: true
+config :trader, Trader.Alpaca.Alpaca,
+  enable: true,
+  environment: "paper"
 
 config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
+
+config :trader, Trader.Alpaca.AlpacaApi,
+  api_key: System.get_env("ALPACA_API_KEY_ID"),
+  api_secret: System.get_env("ALPACA_API_KEY_SECRET"),
+  trading_api_url: "https://api.alpaca.markets"
+
 
 # ## SSL Support
 #
