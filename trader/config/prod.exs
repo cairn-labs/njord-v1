@@ -32,7 +32,7 @@ config :trader, Trader.Runners.LiveRunner, enable: true
 
 config :trader, Trader.Alpaca.Alpaca,
   enable: true,
-  environment: "paper"
+  environment: "live"
 
 config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 
