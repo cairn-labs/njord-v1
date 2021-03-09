@@ -34,6 +34,16 @@ defmodule Trader.ExchangeUtil do
   end
 
   def describe_order(%Order{
+        order_type: :TRAILING_STOP_SELL,
+        sell_product: %Product{product_name: product},
+        amount: amount,
+        trail_percent: trail_percent
+      }) do
+    percent = round(100 * PriceUtil.as_float(trail_percent))
+    "TRAILING STOP SELL: #{amount} #{product} @ -#{percent}%"
+  end
+
+  def describe_order(%Order{
         order_type: :CANCEL_ORDER,
         target_order_id: target
       }) do
