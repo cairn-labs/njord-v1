@@ -132,7 +132,7 @@ defmodule Trader.Alpaca.Alpaca do
       side: "sell",
       type: "trailing_stop",
       time_in_force: "gtc",
-      trail_percent: "#{PriceUtil.as_float(trail_percent) * 100}",
+      trail_percent: "#{PriceUtil.as_float(trail_percent_str) * 100}",
       client_order_id: order_id
     }
   end
@@ -562,20 +562,20 @@ defmodule Trader.Alpaca.Alpaca do
   end
 
   defp parse_order_from_exchange(%{
-        "client_order_id" => id,
-        "type" => "trailing_stop",
-        "symbol" => ticker,
-        "side" => "sell",
-        "qty" => amount_str,
-        "trail_percent" => trail_percent,
-        "stop_price" => stop_price
-                                 }) do
+         "client_order_id" => id,
+         "type" => "trailing_stop",
+         "symbol" => ticker,
+         "side" => "sell",
+         "qty" => amount_str,
+         "trail_percent" => trail_percent,
+         "stop_price" => stop_price
+       }) do
     [
       Order.new(
         id: id,
         status: :PLACED,
         order_type: :TRAILING_STOP_SELL,
-        price: stop_price
+        price: stop_price,
         trail_percent: trail_percent,
         sell_product: Product.new(product_name: ticker, product_type: :STONK),
         amount: amount_str
