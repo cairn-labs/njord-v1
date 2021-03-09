@@ -232,6 +232,16 @@ defmodule Trader.Alpaca.MockAlpaca do
      }}
   end
 
+  @impl true
+  def handle_call(
+        {:submit_order, %Order{order_type: :TRAILING_STOP_SELL}},
+        _from,
+        state
+      ) do
+    Logger.warn("Ignoring TRAILING_STOP_SELL; backtesting framework has not yet implemented it.")
+    {:reply, :ok, state}
+  end
+
   ###################
   # Private Methods #
   ###################

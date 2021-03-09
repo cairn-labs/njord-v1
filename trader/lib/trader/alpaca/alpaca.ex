@@ -117,6 +117,29 @@ defmodule Trader.Alpaca.Alpaca do
   def order_request_object(
         %Order{
           id: order_id,
+          order_type: :TRAILING_STOP_SELL,
+          trail_percent: trail_percent_str,
+          sell_product:
+            %Product{
+              product_name: ticker
+            } = product,
+          amount: amount_str
+        } = order
+      ) do
+    %{
+      symbol: ticker,
+      qty: amount_str,
+      side: "sell",
+      type: "trailing_stop",
+      time_in_force: "gtc",
+      trail_percent: "#{PriceUtil.as_float(trail_percent) * 100}",
+      client_order_id: order_id
+    }
+  end
+
+  def order_request_object(
+        %Order{
+          id: order_id,
           order_type: :MARKET_BUY,
           buy_product:
             %Product{
@@ -411,7 +434,8 @@ defmodule Trader.Alpaca.Alpaca do
         {%Order{order_type: t}, value} when t == :MARKET_BUY or t == :LIMIT_BUY ->
           -1 * value
 
-        {%Order{order_type: t}, value} when t == :MARKET_SELL or t == :LIMIT_SELL ->
+        {%Order{order_type: t}, value}
+        when t == :MARKET_SELL or t == :LIMIT_SELL or t == :TRAILING_STOP_SELL ->
           value
       end)
       |> Enum.sum()
@@ -531,6 +555,28 @@ defmodule Trader.Alpaca.Alpaca do
         id: id,
         status: :PLACED,
         order_type: :MARKET_SELL,
+        sell_product: Product.new(product_name: ticker, product_type: :STONK),
+        amount: amount_str
+      )
+    ]
+  end
+
+  defp parse_order_from_exchange(%{
+        "client_order_id" => id,
+        "type" => "trailing_stop",
+        "symbol" => ticker,
+        "side" => "sell",
+        "qty" => amount_str,
+        "trail_percent" => trail_percent,
+        "stop_price" => stop_price
+                                 }) do
+    [
+      Order.new(
+        id: id,
+        status: :PLACED,
+        order_type: :TRAILING_STOP_SELL,
+        price: stop_price
+        trail_percent: trail_percent,
         sell_product: Product.new(product_name: ticker, product_type: :STONK),
         amount: amount_str
       )

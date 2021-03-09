@@ -26,6 +26,11 @@ message TradingStrategy {
     // would add limit sell orders at +10% of buy price.
     float take_profit_percent = 7;
 
+    // If set, add a trailing stop loss order at high water price - X%. For example,
+    // setting trailing_stop_percent = 0.05 would add trailing stop orders at -5% of
+    // high water price.
+    float trailing_stop_percent = 8;
+
     TradingSchedule schedule = 5;
     PredictionModelConfig prediction_model_config = 4;
 }

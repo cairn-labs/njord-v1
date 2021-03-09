@@ -9,6 +9,7 @@ enum OrderType {
     LIMIT_SELL = 4;
     CANCEL_ORDER = 5;
     SELL_STOP = 6;
+    TRAILING_STOP_SELL = 7;
 }
 
 enum OrderStatus {
@@ -27,6 +28,7 @@ message Order {
     Product sell_product = 4;
     string price = 5;
     string amount = 12;
+    string trail_percent = 16;
     OrderStatus status = 6;
 
     // For MARKET_BUY orders: if take_profit_price is set, add a limit sell order at this

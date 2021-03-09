@@ -4,9 +4,8 @@
 name: "wsb_momentum_strategy"
 capital_allocation: 0.059
 cadence_ms: 720000  # 0.2 hours
-# cadence_ms: 60000  # just for testing
 schedule: MARKET_HOURS
-stop_loss_percent: 0.05
+trailing_stop_percent: 0.05
 prediction_model_config {
   name: "subreddit_ticker_mention_momentum"
   frame_config {

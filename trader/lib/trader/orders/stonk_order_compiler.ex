@@ -200,8 +200,11 @@ defmodule Trader.Orders.StonkOrderCompiler do
 
     available_cash =
       case cash_holding do
-        %ProductHolding{amount: amount_str} -> PriceUtil.clip(PriceUtil.as_float(amount_str), 0, nil)
-        _ -> 0
+        %ProductHolding{amount: amount_str} ->
+          PriceUtil.clip(PriceUtil.as_float(amount_str), 0, nil)
+
+        _ ->
+          0
       end
 
     pending_sell_amount =
@@ -224,35 +227,59 @@ defmodule Trader.Orders.StonkOrderCompiler do
          (available_cash + pending_sell_amount) * delta / total_weight / Map.get(prices, ticker)
        )}
     end)
-    |> Enum.map(fn {ticker, amount_to_buy} ->
-      create_buy_order(ticker, amount_to_buy, sell_order_ids, Map.get(prices, ticker), strategy)
+    |> Enum.flat_map(fn {ticker, amount_to_buy} ->
+      create_buy_orders(ticker, amount_to_buy, sell_order_ids, Map.get(prices, ticker), strategy)
     end)
     |> remove_zero_orders
   end
 
-  defp create_buy_order(ticker, amount_to_buy, parent_order_ids, current_price, strategy) do
-    Order.new(
-      id: UUID.uuid4(),
-      order_type: :MARKET_BUY,
-      amount: "#{amount_to_buy}",
-      buy_product:
-        Product.new(
-          product_type: :STONK,
-          product_name: ticker
-        ),
-      status: :DRAFT,
-      parent_order_ids: parent_order_ids,
-      take_profit_price:
-        if(strategy.take_profit_percent != 0,
-          do: (1 + strategy.take_profit_percent) * current_price,
-          else: 0.0
-        ),
-      stop_loss_price:
-        if(strategy.stop_loss_percent != 0,
-          do: (1 - strategy.stop_loss_percent) * current_price,
-          else: 0.0
-        )
-    )
+  defp create_buy_orders(ticker, amount_to_buy, parent_order_ids, current_price, strategy) do
+    buy_order =
+      Order.new(
+        id: UUID.uuid4(),
+        order_type: :MARKET_BUY,
+        amount: "#{amount_to_buy}",
+        buy_product:
+          Product.new(
+            product_type: :STONK,
+            product_name: ticker
+          ),
+        status: :DRAFT,
+        parent_order_ids: parent_order_ids,
+        take_profit_price:
+          if(strategy.take_profit_percent != 0,
+            do: (1 + strategy.take_profit_percent) * current_price,
+            else: 0.0
+          ),
+        stop_loss_price:
+          if(strategy.stop_loss_percent != 0,
+            do: (1 - strategy.stop_loss_percent) * current_price,
+            else: 0.0
+          )
+      )
+
+    trailing_orders =
+      if strategy.trailing_stop_percent != 0 do
+        [
+          Order.new(
+            id: UUID.uuid4(),
+            order_type: :TRAILING_STOP_SELL,
+            amount: "#{amount_to_buy}",
+            trail_percent: "#{strategy.trailing_stop_percent}",
+            sell_product:
+              Product.new(
+                product_type: :STONK,
+                product_name: ticker
+              ),
+            status: :DRAFT,
+            parent_order_ids: [buy_order.id]
+          )
+        ]
+      else
+        []
+      end
+
+    [buy_order | trailing_orders]
   end
 
   defp get_order_presumed_liquidity(
