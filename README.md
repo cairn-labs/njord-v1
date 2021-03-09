@@ -4,7 +4,7 @@ Njord
 Njord is an algorithmic trading system designed to actively trade a variety of
 assets (currently, equities and cryptocurrencies) based on streams of various
 data types (currently stock aggregates, crypto order books, subreddit top pages
-+ comments, and news headlines + articles). It is not designed for high
+and comments, and news headlines + articles). It is not designed for high
 frequency trading (it is a soft-realtime system and trading based on
 second-level data is probably ill-advised) but should be capable of trading
 strategies at cadences of one minute to weeks.
