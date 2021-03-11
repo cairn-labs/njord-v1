@@ -1,7 +1,7 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 7200000 # 2 hours
+frame_width_ms: 3600000 # 1 hour
 num_frames_requested: 1000
 sample_start_date: "2021-02-16"
 sample_end_date: "2021-03-06"
@@ -30,12 +30,25 @@ feature_configs {
     }
   }
 }
+feature_configs {
+  data_point_type: SUBREDDIT_TOP_LISTING
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 3600000  # 1 hour
+  vectorization_strategy: WEIGHTED_BAG_OF_WORDS
+  subreddit_top_listing_config {
+    subreddit_name: "bitcoin"
+  }
+}
 label_config {
   prediction_delay_ms: 1800000
-  label_type: STONK_PRICE
-  stonk_price_config {
-    ticker: {{ticker}}
-    width_minutes: 1
+  label_type: FX_RATE
+  fx_rate_config {
+    product {
+      counter: USD
+      base: {{crypto}}
+    }
+    label_direction_only: true
+    movement_minimum_percent_change: 0.005
   }
 }
 sampling_strategy {

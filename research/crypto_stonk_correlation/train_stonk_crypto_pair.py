@@ -2,6 +2,7 @@ import sys
 import os
 from google.protobuf.text_format import Parse
 from analyst.proto.frame_config_pb2 import FrameConfig
+from analyst.proto.label_config_pb2 import LabelType
 from analyst.dataset import DataSet
 from analyst.word_dictionary import WordDictionary
 import numpy as np
@@ -16,6 +17,9 @@ import tensorflow as tf
 
 TRAIN_TEST_SPLIT = 0.8
 
+def encode_weighted_words(weighted_words, dictionary: WordDictionary):
+    return np.asarray([[dictionary.learn_and_encode(word), score] for word, score in weighted_words], dtype=int)
+
 
 def read_frame_config(stonk, crypto):
     with open(os.path.join(os.path.dirname(__file__), "stonk_and_crypto_frame_template.pb.txt")) as handle:
@@ -29,22 +33,29 @@ def read_frame_config(stonk, crypto):
     return frame_config
 
 
-def stream_data(dataset: DataSet):
+def stream_data(dataset: DataSet, frame_config: FrameConfig, dictionary: WordDictionary):
     for X, y in dataset.labeled_data:
-        stonk, crypto = X
+        stonk, crypto, reddit = X
 
-        last_stonk_price = stonk[-1][0]
-        if last_stonk_price == 0:
-            continue
-        diff = (y - last_stonk_price) / last_stonk_price
-        if diff > 0.002:
-            new_y = 1
-        elif diff > -0.002:
-            new_y = 0
+        if frame_config.label_config.label_type == LabelType.STONK_PRICE:
+            last_stonk_price = stonk[-1][0]
+            if last_stonk_price == 0:
+                continue
+            diff = (y - last_stonk_price) / last_stonk_price
+            if diff > 0.002:
+                new_y = 1
+            elif diff > -0.002:
+                new_y = 0
+            else:
+                new_y = -1
+        elif frame_config.label_config.label_type == LabelType.FX_RATE:
+            new_y = y
         else:
-            new_y = -1
+            raise ValueError()
 
-        yield [{'stonk': stonk, 'crypto': crypto}, new_y]
+        reddit = encode_weighted_words(reddit[0], dictionary)
+
+        yield [{'stonk': stonk, 'crypto': crypto, 'reddit': reddit}, new_y]
 
 
 if __name__ == '__main__':
@@ -56,35 +67,41 @@ if __name__ == '__main__':
     dataset = DataSet(data_filename, frame_config)
     dictionary = WordDictionary()
 
-    stonk_input = Input(shape=(120, 2), dtype=tf.float32, name='stonk')
-    stonk_lstm1 = layers.Bidirectional(layers.LSTM(32, return_sequences=True, input_shape=(120, 2), dropout=0.2))(stonk_input)
-    stonk_lstm2 = layers.Bidirectional(layers.LSTM(10, input_shape=(15, 2), dropout=0.2))(stonk_lstm1)
-    dense_stonk = layers.Dense(8)(stonk_lstm2)
+    stonk_input = Input(shape=(60, 2), dtype=tf.float32, name='stonk')
+    upsampled = layers.UpSampling1D(size=4)(stonk_input)
+    crypto_input = Input(shape=(240,), dtype=tf.float32, name='crypto')
+    crypto_reshaped = layers.Reshape(target_shape=(240, 1))(crypto_input)
+    concatenated = layers.concatenate([upsampled, crypto_reshaped], axis=2)
 
-    crypto_input = Input(shape=(480,), dtype=tf.float32, name='crypto')
-    crypto_reshaped = layers.Reshape(target_shape=(480,1))(crypto_input)
-    crypto_lstm1 = layers.Bidirectional(layers.LSTM(32, return_sequences=True, input_shape=(480,1), dropout=0.2))(crypto_reshaped)
-    crypto_lstm2 = layers.Bidirectional(layers.LSTM(10, input_shape=(480,1), dropout=0.2))(crypto_lstm1)
+    lstm1 = layers.Bidirectional(layers.LSTM(512, return_sequences=True, input_shape=(240, 3), dropout=0.2))(concatenated)
+    lstm2 = layers.Bidirectional(layers.LSTM(256, input_shape=(240, 3), dropout=0.2))(lstm1)
 
-    dense_crypto = layers.Dense(16)(crypto_lstm2)
+    dense_prices = layers.Dense(128, activation='sigmoid')(lstm2)
 
-    x = layers.concatenate([dense_stonk, dense_crypto])
-    intermediate = layers.Dense(16)(x)
-    direction_pred = layers.Dense(3, name="direction_class")(intermediate)
+    reddit_input = Input(shape=(1000, 2), dtype=tf.float32, name='reddit')
+    reddit_reshaped = layers.Reshape((2000,))(reddit_input)
+    dense_reddit = layers.Dense(128, activation='sigmoid')(reddit_reshaped)
+
+    x = layers.concatenate([dense_prices, dense_reddit])
+    intermediate = layers.Dense(128, activation='sigmoid')(x)
+    intermediate2 = layers.Dense(64, activation='sigmoid')(intermediate)
+    direction_pred = layers.Dense(3, name="direction_class", activation='softmax')(intermediate2)
     model = Model(
-        inputs=[stonk_input, crypto_input],
+        inputs=[stonk_input, crypto_input, reddit_input],
         outputs=[direction_pred]
     )
 
-    xs, y = zip(*stream_data(dataset))
+    xs, y = zip(*stream_data(dataset, frame_config, dictionary))
 
     y = OneHotEncoder(categories=[[-1, 0, 1]], sparse=False).fit_transform([[d] for d in y])
     xs_train, xs_test, y_train, y_test = train_test_split(xs, y, test_size=1 - TRAIN_TEST_SPLIT)
     X_train = {'stonk': np.asarray([x['stonk'] for x in xs_train], dtype=np.float32),
-               'crypto': np.asarray([x['crypto'] for x in xs_train], dtype=np.float32)}
+               'crypto': np.asarray([x['crypto'] for x in xs_train], dtype=np.float32),
+               'reddit': np.asarray([x['reddit'] for x in xs_train], dtype=np.float32)}
     X_test = {'stonk': np.asarray([x['stonk'] for x in xs_test], dtype=np.float32),
-              'crypto': np.asarray([x['crypto'] for x in xs_test], dtype=np.float32)}
-    print(xs_train, y_train)
+              'crypto': np.asarray([x['crypto'] for x in xs_test], dtype=np.float32),
+              'reddit': np.asarray([x['reddit'] for x in xs_test], dtype=np.float32)}
+    print(y_train)
     model.compile(
         optimizer='adam',
         loss='categorical_crossentropy',
@@ -93,7 +110,7 @@ if __name__ == '__main__':
     model.fit(
         X_train,
         y_train,
-        epochs=50,
+        epochs=30,
         batch_size=1
     )
 
