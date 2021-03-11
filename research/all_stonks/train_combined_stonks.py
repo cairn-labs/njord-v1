@@ -7,8 +7,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Reshape, LSTM, Dense, Bidirectional
+from tensorflow.keras.layers import Reshape, LSTM, Dense, Bidirectional, Dropout
 import tensorflow as tf
+import sys
 
 TRAIN_TEST_SPLIT = 0.75
 
@@ -19,6 +20,9 @@ with open(os.path.join(os.path.dirname(__file__), "stonk_frame_template.pb.txt")
 def stream_data():
     for filename in glob.glob(os.path.join(os.path.dirname(__file__), "data", "*.zip")):
         stonk, _ = os.path.splitext(os.path.basename(filename))
+        if len(sys.argv) > 1 and stonk != sys.argv[1]:
+            continue
+
         frame_config_text = pb_template.replace("{{ticker}}", f'"{stonk}"')
         frame_config = FrameConfig()
         Parse(frame_config_text, frame_config)
@@ -49,13 +53,14 @@ if __name__ == "__main__":
     print(y_train.shape)
     model = Sequential()
     model.add(Reshape((15, 2), input_shape=(1, 15, 2)))
-    #model.add(Bidirectional(LSTM(32, return_sequences=True, input_shape=(15, 2))))
-    model.add(Bidirectional(LSTM(10, input_shape=(15, 2))))
+    model.add(Bidirectional(LSTM(32, return_sequences=True, input_shape=(15, 2), dropout=0.2)))
+    model.add(Bidirectional(LSTM(10, input_shape=(15, 2), dropout=0.2)))
     # model.add(Dense(32))
-    # model.add(Dense(8))
+    model.add(Dropout(0.2))
+    model.add(Dense(8))
     model.add(Dense(3, activation='softmax'))
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train, epochs=150, batch_size=16, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=200, batch_size=8, validation_data=(X_test, y_test))
     loss, accuracy = model.evaluate(X_test, y_test)
     print(loss)
     print(accuracy)

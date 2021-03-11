@@ -1,7 +1,7 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 900000 # 15 minutes
+frame_width_ms: 7200000 # 2 hours
 num_frames_requested: 1000
 sample_start_date: "2021-02-16"
 sample_end_date: "2021-03-06"
@@ -18,8 +18,20 @@ feature_configs {
     width_minutes: 1
   }
 }
+feature_configs {
+  data_point_type: L2_ORDER_BOOK
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 15000
+  vectorization_strategy: PRICE_ONLY
+  l2_order_book_config {
+    product {
+      counter: USD
+      base: {{crypto}}
+    }
+  }
+}
 label_config {
-  prediction_delay_ms: 120000
+  prediction_delay_ms: 1800000
   label_type: STONK_PRICE
   stonk_price_config {
     ticker: {{ticker}}
