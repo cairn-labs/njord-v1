@@ -1,5 +1,6 @@
 defmodule Trader.ExchangeUtil do
   require Logger
+  alias Trader.PriceUtil
 
   def print_positions(title, %ExchangePositions{holdings: holdings, orders: orders}) do
     holdings_description =
