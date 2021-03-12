@@ -65,7 +65,7 @@ if __name__ == '__main__':
     dense_wsb = layers.Dense(128)(wsb_reshaped)
     x = layers.concatenate([dense_gme, dense_wsb])
     intermediate = layers.Dense(16)(x)
-    direction_pred = layers.Dense(3, name="direction_class")(intermediate)
+    direction_pred = layers.Dense(3, name="direction_class", activation='softmax')(intermediate)
     model = Model(
         inputs=[gme_input, wsb_input],
         outputs=[direction_pred]
