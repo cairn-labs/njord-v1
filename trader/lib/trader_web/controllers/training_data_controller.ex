@@ -9,17 +9,21 @@ defmodule TraderWeb.TrainingDataController do
       |> File.read!()
       |> FrameConfig.decode()
 
-    {:ok, frames} = Trader.Frames.FrameGeneration.generate_frames(frame_config)
+    case Trader.Frames.FrameGeneration.generate_frames(frame_config) do
+      {:ok, frames} ->
+        files =
+          frames
+          |> Stream.with_index()
+          |> Enum.map(fn {f, idx} ->
+            {'component_' ++ to_charlist(idx) ++ '.pb', DataFrame.encode(f)}
+          end)
 
-    files =
-      frames
-      |> Stream.with_index()
-      |> Enum.map(fn {f, idx} ->
-        {'component_' ++ to_charlist(idx) ++ '.pb', DataFrame.encode(f)}
-      end)
+        {:ok, {'mem', zip_bin}} = :zip.create('mem', files, [:memory])
+        send_download(conn, {:binary, zip_bin}, filename: "frames.zip")
 
-    {:ok, {'mem', zip_bin}} = :zip.create('mem', files, [:memory])
-    send_download(conn, {:binary, zip_bin}, filename: "frames.zip")
+      {:error, :no_data_available} ->
+        ApiUtil.send_error(conn, 404, "No data available")
+    end
   end
 
   def test_predict(conn, %{"config" => config_upload}) do

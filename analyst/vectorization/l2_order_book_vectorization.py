@@ -14,6 +14,8 @@ def l2_order_book_feature_shape(format):
         return L2_ORDER_BOOK_SHAPE
     elif format == PRICE_ONLY:
         return L2_ORDER_BOOK_PRICE_ONLY_SHAPE
+    else:
+        raise NotImplementedError(f"Vectorization strategy {format} not implemented for L2 Order Book")
 
 
 def vectorize_l2_order_book_frame_component(component: FrameComponent, format):
