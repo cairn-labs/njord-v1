@@ -31,6 +31,8 @@ defmodule Trader.Orders.StonkOrderCompiler do
         prices,
         %Prediction{labels: labels} = prediction
       ) do
+    Logger.info("Getting orders for predictions #{inspect(prediction)}")
+
     down_prediction_sell_orders =
       get_down_prediction_sell_orders(current_positions, prices, labels)
 
@@ -169,13 +171,20 @@ defmodule Trader.Orders.StonkOrderCompiler do
     orders_to_cancel =
       current_positions.orders
       |> Enum.filter(fn
-        %Order{status: :PLACED, buy_product: b, sell_product: s} ->
-          not (b in tickers_to_ignore or s in tickers_to_ignore)
+        %Order{status: :PLACED, buy_product: %Product{product_type: :STONK, product_name: t}} ->
+          t not in tickers_to_ignore
+
+        %Order{status: :PLACED, sell_product: %Product{product_type: :STONK, product_name: t}} ->
+          t not in tickers_to_ignore
 
         _ ->
           false
       end)
       |> Enum.flat_map(fn %Order{status: :PLACED, buy_product: b, sell_product: s} -> [b, s] end)
+      |> Enum.filter(fn
+        nil -> false
+        _ -> true
+      end)
 
     (holdings_to_sell ++ orders_to_cancel)
     |> Enum.into(MapSet.new())
