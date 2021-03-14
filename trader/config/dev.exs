@@ -7,9 +7,9 @@ config :trader, Trader.Repo,
   database: "trader_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10,
-  timeout: 600_000
-
+  pool_size: 20,
+  timeout: 6_000_000,
+  
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -17,7 +17,9 @@ config :trader, Trader.Repo,
 # watchers to your application. For example, we use it
 # with webpack to recompile .js and .css sources.
 config :trader, TraderWeb.Endpoint,
-  http: [port: 4000, protocol_options: [idle_timeout: 5_000_000, request_timeout: 5_000_000]],
+  http: [port: 4000, protocol_options: [idle_timeout: 5_000_000,
+                                        request_timeout: 5_000_000,
+                                        inactivity_timeout: 5_000_000]],
   debug_errors: true,
   code_reloader: true,
   check_origin: false

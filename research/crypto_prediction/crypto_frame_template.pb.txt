@@ -1,25 +1,14 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 1800000 # 30 minutes
+frame_width_ms: 3600000 # 60 minutes
 num_frames_requested: 1000
 sample_start_date: "2021-02-16"
-# sample_start_date: "2021-03-06"
 sample_end_date: "2021-03-13"
-feature_configs {
-  data_point_type: STONK_AGGREGATE
-  bucketing_strategy: EARLIEST
-  bucket_width_ms: 60000
-  vectorization_strategy: PRICE_AND_VOLUME
-  stonk_aggregate_config {
-    ticker: {{ticker}}
-    width_minutes: 1
-  }
-}
 feature_configs {
   data_point_type: L2_ORDER_BOOK
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 15000
+  bucket_width_ms: 30000
   vectorization_strategy: PRICE_ONLY
   l2_order_book_config {
     product {
@@ -34,7 +23,7 @@ feature_configs {
   bucket_width_ms: 1800000  # 30 minutes
   vectorization_strategy: WEIGHTED_BAG_OF_WORDS
   subreddit_top_listing_config {
-    subreddit_name: "investing"
+    subreddit_name: "bitcoin"
   }
 }
 feature_configs {
@@ -43,27 +32,28 @@ feature_configs {
   bucket_width_ms: 1800000  # 30 minutes
   vectorization_strategy: WEIGHTED_BAG_OF_WORDS
   subreddit_top_listing_config {
-    subreddit_name: "news"
+    subreddit_name: "cryptocurrency"
   }
 }
-# label_config {
-#  prediction_delay_ms: 1800000
-#  label_type: FX_RATE
-#  fx_rate_config {
-#    product {
-#      counter: USD
-#      base: {{crypto}}
-#    }
-#    label_direction_only: true
-#    movement_minimum_percent_change: 0.005
-#  }
-#}
-label_config {
-  prediction_delay_ms: 300000  # 5 minutes
-  label_type: STONK_PRICE
-  stonk_price_config {
-    ticker: {{ticker}}
-    width_minutes: 1
+feature_configs {
+  data_point_type: SUBREDDIT_TOP_LISTING
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 1800000  # 30 minutes
+  vectorization_strategy: WEIGHTED_BAG_OF_WORDS
+  subreddit_top_listing_config {
+    subreddit_name: "ethtrader"
+  }
+}
+ label_config {
+  prediction_delay_ms: 600000
+  label_type: FX_RATE
+  fx_rate_config {
+    product {
+      counter: USD
+      base: {{crypto}}
+    }
+    label_direction_only: true
+    movement_minimum_percent_change: 0.005
   }
 }
 sampling_strategy {

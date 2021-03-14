@@ -1,8 +1,10 @@
 defmodule Trader.Frames.FrameGeneration do
   alias Trader.Db
   alias Trader.Frames.LabelExtraction
-  require Logger
+  require Logger  
 
+  @inter_frame_delay_ms 1000
+  
   @doc """
   Gets a set of frames including labels, as specified by a provided FrameConfig
   """
@@ -220,6 +222,8 @@ defmodule Trader.Frames.FrameGeneration do
       |> DateTime.add(prediction_delay_ms, :millisecond)
       |> LabelExtraction.get_label(label_config)
 
+    :timer.sleep(@inter_frame_delay_ms)
+    
     DataFrame.new(components: components, label: label)
   end
 

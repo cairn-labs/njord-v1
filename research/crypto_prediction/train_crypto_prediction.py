@@ -22,11 +22,10 @@ def encode_weighted_words(weighted_words, dictionary: WordDictionary):
     return np.asarray([[dictionary.learn_and_encode(word), score] for word, score in weighted_words], dtype=int)
 
 
-def read_frame_config(stonk, crypto):
-    with open(os.path.join(os.path.dirname(__file__), "stonk_and_crypto_frame_template.pb.txt")) as handle:
+def read_frame_config(crypto):
+    with open(os.path.join(os.path.dirname(__file__), "crypto_frame_template.pb.txt")) as handle:
         frame_config_text = (handle
                              .read()
-                             .replace("{{ticker}}", f'"{stonk}"')
                              .replace("{{crypto}}", f'{crypto}'))
 
     frame_config = FrameConfig()
@@ -36,47 +35,26 @@ def read_frame_config(stonk, crypto):
 
 def stream_data(dataset: DataSet, frame_config: FrameConfig, dictionary: WordDictionary):
     for X, y in dataset.labeled_data:
-        stonk, crypto, reddit1, reddit2 = X
-
-        if frame_config.label_config.label_type == LabelType.STONK_PRICE:
-            last_stonk_price = stonk[-1][0]
-            if last_stonk_price == 0:
-                continue
-            diff = (y - last_stonk_price) / last_stonk_price
-            if diff > 0.003:
-                new_y = 1
-            elif diff > -0.003:
-                new_y = 0
-            else:
-                new_y = -1
-        elif frame_config.label_config.label_type == LabelType.FX_RATE:
-            new_y = y
-        else:
-            raise ValueError()
-
+        crypto, reddit1, reddit2, reddit3 = X
         reddit1 = encode_weighted_words(reddit1[0], dictionary)
         reddit2 = encode_weighted_words(reddit2[0], dictionary)
-
-        yield [{'stonk': stonk, 'crypto': crypto, 'reddit1': reddit1, 'reddit2': reddit2}, new_y]
+        reddit3 = encode_weighted_words(reddit3[0], dictionary)
+        yield [{'crypto': crypto, 'reddit1': reddit1, 'reddit2': reddit2, 'reddit3': reddit3}, y]
 
 
 if __name__ == '__main__':
-    stonk = sys.argv[1]
-    crypto = sys.argv[2]
-    data_filename = os.path.join(os.path.dirname(__file__), 'data', f'{stonk}-{crypto}.zip')
+    crypto = sys.argv[1]
+    data_filename = os.path.join(os.path.dirname(__file__), 'data', f'{crypto}.zip')
 
-    frame_config = read_frame_config(stonk, crypto)
+    frame_config = read_frame_config(crypto)
     dataset = DataSet(data_filename, frame_config)
     dictionary = WordDictionary()
 
-    stonk_input = Input(shape=(30, 2), dtype=tf.float32, name='stonk')
-    upsampled = layers.UpSampling1D(size=4)(stonk_input)
     crypto_input = Input(shape=(120,), dtype=tf.float32, name='crypto')
     crypto_reshaped = layers.Reshape(target_shape=(120, 1))(crypto_input)
-    concatenated = layers.concatenate([upsampled, crypto_reshaped], axis=2)
 
-    lstm1 = layers.Bidirectional(layers.LSTM(64, return_sequences=True, input_shape=(120, 3), dropout=0.2))(concatenated)
-    lstm2 = layers.Bidirectional(layers.LSTM(32, input_shape=(120, 3), dropout=0.2))(lstm1)
+    lstm1 = layers.Bidirectional(layers.LSTM(64, return_sequences=True, input_shape=(120, 1), dropout=0.2))(crypto_reshaped)
+    lstm2 = layers.Bidirectional(layers.LSTM(32, input_shape=(120, 1), dropout=0.2))(lstm1)
 
     dense_prices = layers.Dense(32, activation='sigmoid')(lstm2)
 
@@ -88,12 +66,16 @@ if __name__ == '__main__':
     reddit2_reshaped = layers.Reshape((2000,))(reddit2_input)
     dense_reddit2 = layers.Dense(128, activation='sigmoid')(reddit2_reshaped)
 
-    x = layers.concatenate([dense_prices, dense_reddit1, dense_reddit2])
+    reddit3_input = Input(shape=(1000, 2), dtype=tf.float32, name='reddit3')
+    reddit3_reshaped = layers.Reshape((2000,))(reddit3_input)
+    dense_reddit3 = layers.Dense(128, activation='sigmoid')(reddit3_reshaped)
+
+    x = layers.concatenate([dense_prices, dense_reddit1, dense_reddit2, dense_reddit3])
     intermediate = layers.Dense(128, activation='sigmoid')(x)
     intermediate2 = layers.Dense(64, activation='sigmoid')(intermediate)
     direction_pred = layers.Dense(3, name="direction_class", activation='softmax')(intermediate2)
     model = Model(
-        inputs=[stonk_input, crypto_input, reddit1_input, reddit2_input],
+        inputs=[crypto_input, reddit1_input, reddit2_input, reddit3_input],
         outputs=[direction_pred]
     )
 
@@ -101,14 +83,14 @@ if __name__ == '__main__':
 
     y = OneHotEncoder(categories=[[-1, 0, 1]], sparse=False).fit_transform([[d] for d in y])
     xs_train, xs_test, y_train, y_test = train_test_split(xs, y, test_size=1 - TRAIN_TEST_SPLIT)
-    X_train = {'stonk': np.asarray([x['stonk'] for x in xs_train], dtype=np.float32),
-               'crypto': np.asarray([x['crypto'] for x in xs_train], dtype=np.float32),
+    X_train = {'crypto': np.asarray([x['crypto'] for x in xs_train], dtype=np.float32),
                'reddit1': np.asarray([x['reddit1'] for x in xs_train], dtype=np.float32),
-               'reddit2': np.asarray([x['reddit2'] for x in xs_train], dtype=np.float32)}
-    X_test = {'stonk': np.asarray([x['stonk'] for x in xs_test], dtype=np.float32),
-              'crypto': np.asarray([x['crypto'] for x in xs_test], dtype=np.float32),
+               'reddit2': np.asarray([x['reddit2'] for x in xs_train], dtype=np.float32),
+               'reddit3': np.asarray([x['reddit3'] for x in xs_train], dtype=np.float32)}
+    X_test = {'crypto': np.asarray([x['crypto'] for x in xs_test], dtype=np.float32),
               'reddit1': np.asarray([x['reddit1'] for x in xs_test], dtype=np.float32),
-              'reddit2': np.asarray([x['reddit2'] for x in xs_test], dtype=np.float32)}
+              'reddit2': np.asarray([x['reddit2'] for x in xs_test], dtype=np.float32),
+              'reddit3': np.asarray([x['reddit3'] for x in xs_test], dtype=np.float32)}
 
     model.compile(
         optimizer='adam',
@@ -136,7 +118,3 @@ if __name__ == '__main__':
     print('up recall:', up_recall)
     print('down precision:', down_precision)
     print('down recall:', down_recall)
-    # with open(os.path.join(os.path.dirname(__file__), 'data', f'{stonk}-{crypto}-results.txt'), 'w') as handle:
-    #     csv_writer = csv.writer(handle)
-    #     csv_writer.writerow(['up_precision,up_recall,down_precision,down_recall'])
-    #     csv_writer.writerow([up_precision, up_recall, down_precision, down_recall])
