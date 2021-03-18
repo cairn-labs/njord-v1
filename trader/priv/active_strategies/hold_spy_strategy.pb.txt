@@ -2,7 +2,7 @@
 # proto-message: TradingStrategy
 
 name: "hold_spy_strategy"
-capital_allocation: 0.94
+capital_allocation: 0.9
 cadence_ms: 3600000  # one hour
 schedule: MARKET_HOURS
 prediction_model_config {

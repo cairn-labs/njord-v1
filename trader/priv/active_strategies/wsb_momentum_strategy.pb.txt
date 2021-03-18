@@ -2,10 +2,10 @@
 # proto-message: TradingStrategy
 
 name: "wsb_momentum_strategy"
-capital_allocation: 0.059
+capital_allocation: 0.099
 cadence_ms: 720000  # 0.2 hours
 schedule: MARKET_HOURS
-trailing_stop_percent: 0.05
+trailing_stop_percent: 0.15
 prediction_model_config {
   name: "subreddit_ticker_mention_momentum"
   frame_config {
