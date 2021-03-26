@@ -1,0 +1,26 @@
+# proto-file: trading_strategy.proto
+# proto-message: TradingStrategy
+
+name: "gme_tensorflow_momentum_strategy"
+capital_allocation: 0.049
+cadence_ms: 480000  # 8 minutes
+schedule: MARKET_HOURS
+prediction_model_config {
+  name: "tensorflow_stonk_prediction"
+  frame_config {
+    frame_width_ms: 960000
+    feature_configs {
+      data_point_type: STONK_AGGREGATE
+      bucketing_strategy: EARLIEST
+      bucket_width_ms: 120000
+      vectorization_strategy: PRICE_AND_VOLUME
+      stonk_aggregate_config {
+        ticker: "GME"
+        width_minutes: 1
+      }
+    }
+  }
+  label_config {
+    prediction_delay_ms: 120000
+  }
+}
