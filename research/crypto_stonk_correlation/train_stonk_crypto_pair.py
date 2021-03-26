@@ -119,7 +119,8 @@ if __name__ == '__main__':
         X_train,
         y_train,
         epochs=40,
-        batch_size=2
+        batch_size=2,
+        validation_data=(X_test, y_test)
     )
 
     y_true = np.argmax(y_test, axis=1)
