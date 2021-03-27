@@ -28,14 +28,9 @@ defmodule Mix.Tasks.Trader.RegenerateMetadata do
 
   defp update_price([id, datapoint]) do
     price =
-      case datapoint do
-        %DataPoint{l2_order_book: order_book} ->
-          Trader.PriceUtil.price_from_order_book(order_book)
-          |> Trader.PriceUtil.as_float()
-
-        _ ->
-          nil
-      end
+      datapoint
+      |> Trader.PriceUtil.price_from_data_point()
+      |> Trader.PriceUtil.as_float()
 
     Trader.Db.DataPoints.update_price(id, price)
 
