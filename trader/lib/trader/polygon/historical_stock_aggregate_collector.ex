@@ -1,4 +1,4 @@
-defmodule Trader.Polygon.StockAggregateCollector do
+defmodule Trader.Polygon.HistoricalStockAggregateCollector do
   require Logger
   use GenServer
   alias Trader.Db
@@ -28,7 +28,7 @@ defmodule Trader.Polygon.StockAggregateCollector do
   @impl true
   def init(_state) do
     if Keyword.get(Application.get_env(:trader, __MODULE__), :enable, true) do
-      Logger.debug("Starting Polygon StockAggregateCollector GenServer...")
+      Logger.debug("Starting Polygon HistoricalStockAggregateCollector GenServer...")
       queue_next_tick(self())
     end
 

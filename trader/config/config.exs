@@ -40,9 +40,10 @@ config :trader, Trader.Coinbase.L2DataCollector,
 
 config :trader, Trader.Polygon.PolygonApi,
   api_key: System.get_env("POLYGON_API_KEY"),
-  rest_api_url: "https://api.polygon.io/"
+  rest_api_url: "https://api.polygon.io/",
+  websocket_api_url: "wss://socket.polygon.io/stocks"
 
-config :trader, Trader.Polygon.StockAggregateCollector,
+config :trader, Trader.Polygon.HistoricalStockAggregateCollector,
   enable: true,
   milliseconds_per_tick: 60_000
 
@@ -66,7 +67,10 @@ config :trader, Trader.Alpaca.AlpacaApi,
   data_api_url: "https://data.alpaca.markets",
   data_websocket_url: "wss://data.alpaca.markets/stream"
 
-config :trader, Trader.Alpaca.AlpacaDataCollector, enable: true
+# Fuck this shitty data collector
+config :trader, Trader.Alpaca.AlpacaDataCollector, enable: false
+
+config :trader, Trader.Polygon.RealtimeStockAggregateCollector, enable: true
 
 config :trader, Trader.Runners.LiveRunner, enable: true
 

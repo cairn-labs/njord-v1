@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Trader.GetHistoricalData do
   end
 
   def download_stonk_data([ticker, start_date, end_date, window_length_minutes]) do
-    Trader.Polygon.StockAggregateCollector.download_range(
+    Trader.Polygon.HistoricalStockAggregateCollector.download_range(
       ticker,
       start_date,
       end_date,

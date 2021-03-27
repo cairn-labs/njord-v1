@@ -9,7 +9,7 @@ config :trader, Trader.Repo,
   show_sensitive_data_on_connection_error: true,
   pool_size: 20,
   timeout: 6_000_000
-  
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -39,13 +39,17 @@ config :trader, TraderWeb.Endpoint,
 
 config :trader, Trader.Coinbase.L2DataCollector, enable: false
 
-config :trader, Trader.Polygon.StockAggregateCollector, enable: false
+config :trader, Trader.Polygon.HistoricalStockAggregateCollector, enable: false
 
 config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
 config :trader, Trader.Reddit.RedditDataCollector, enable: false
 
 config :trader, Trader.Alpaca.AlpacaDataCollector, enable: false
+
+config :trader, Trader.Alpaca.Alpaca, enable: false
+
+config :trader, Trader.Runners.LiveRunner, enable: false
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n", level: :debug

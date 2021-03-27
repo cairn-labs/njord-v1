@@ -27,7 +27,7 @@ config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 
 config :trader, Trader.Coinbase.L2DataCollector, enable: false
 
-config :trader, Trader.Polygon.StockAggregateCollector, enable: false
+config :trader, Trader.Polygon.HistoricalStockAggregateCollector, enable: false
 
 config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
