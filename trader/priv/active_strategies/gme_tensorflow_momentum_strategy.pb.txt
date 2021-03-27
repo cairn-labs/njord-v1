@@ -3,7 +3,7 @@
 
 name: "gme_tensorflow_momentum_strategy"
 capital_allocation: 0.049
-cadence_ms: 480000  # 8 minutes
+cadence_ms: 180000  # 3 minutes
 schedule: MARKET_HOURS
 prediction_model_config {
   name: "tensorflow_stonk_prediction"

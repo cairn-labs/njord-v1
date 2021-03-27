@@ -31,8 +31,6 @@ defmodule Trader.Orders.StonkOrderCompiler do
         prices,
         %Prediction{labels: labels} = prediction
       ) do
-    Logger.info("Getting orders for predictions #{inspect(prediction)}")
-
     down_prediction_sell_orders =
       get_down_prediction_sell_orders(current_positions, prices, labels)
 

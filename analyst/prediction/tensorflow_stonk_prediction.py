@@ -36,7 +36,7 @@ class TensorflowStonkPredictionModel(PricePredictionModel):
         print('vec', vectorized)
         timestamps = data_timestamps(data_frame, DataPointType.STONK_AGGREGATE)
         target_timestamp = timestamps[-1] + self.prediction_delay_ms_
-        predicted_class = np.argmax(model.predict({'gme': np.asarray([vectorized[0]])}), axis=1)
+        predicted_class = np.argmax(model.predict({'stonk': np.asarray([vectorized[0]])}), axis=1)
         # 0 is down, 1 is flat, 2 is up
         result = Prediction()
         if predicted_class != 1:

@@ -17,9 +17,14 @@ config :trader, Trader.Repo,
 # watchers to your application. For example, we use it
 # with webpack to recompile .js and .css sources.
 config :trader, TraderWeb.Endpoint,
-  http: [port: 4000, protocol_options: [idle_timeout: 5_000_000,
-                                        request_timeout: 5_000_000,
-                                        inactivity_timeout: 5_000_000]],
+  http: [
+    port: 4000,
+    protocol_options: [
+      idle_timeout: 5_000_000,
+      request_timeout: 5_000_000,
+      inactivity_timeout: 5_000_000
+    ]
+  ],
   debug_errors: true,
   check_origin: false
 
@@ -28,6 +33,8 @@ config :trader, Trader.Analyst, analyst_url: "http://localhost:8001"
 config :trader, Trader.Coinbase.L2DataCollector, enable: false
 
 config :trader, Trader.Polygon.HistoricalStockAggregateCollector, enable: false
+
+config :trader, Trader.Polygon.RealtimeStockAggregateCollector, enable: false
 
 config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 

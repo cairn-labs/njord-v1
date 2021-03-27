@@ -3,7 +3,7 @@
 
 frame_width_ms: 960000 # 16 minutes
 num_frames_requested: 1000
-sample_start_date: "2021-02-17"
+sample_start_date: "2021-02-01"
 sample_end_date: "2021-03-20"
 feature_configs {
   data_point_type: STONK_AGGREGATE

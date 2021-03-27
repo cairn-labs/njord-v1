@@ -12,7 +12,7 @@ prediction_model_config {
     feature_configs {
       data_point_type: STONK_AGGREGATE
       bucketing_strategy: EARLIEST
-      bucket_width_ms: 120000
+      bucket_width_ms: 60000
       vectorization_strategy: PRICE_AND_VOLUME
       stonk_aggregate_config {
         ticker: "GME"
