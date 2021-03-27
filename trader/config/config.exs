@@ -64,7 +64,7 @@ config :trader, Trader.Alpaca.AlpacaApi,
   api_secret: System.get_env("ALPACA_PAPER_API_SECRET"),
   trading_api_url: "https://paper-api.alpaca.markets",
   data_api_url: "https://data.alpaca.markets",
-  data_websocket_url: "wss://data.alpaca.markets/stream"
+  data_websocket_url: "wss://stream.data.alpaca.markets/v2/sip"
 
 config :trader, Trader.Alpaca.AlpacaDataCollector, enable: true
 

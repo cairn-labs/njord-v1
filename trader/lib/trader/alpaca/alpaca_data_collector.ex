@@ -6,9 +6,7 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
   def start_link([]) do
     if Application.get_env(:trader, __MODULE__)[:enable] do
       url = Application.get_env(:trader, Trader.Alpaca.AlpacaApi)[:data_websocket_url]
-      {:ok, pid} = WebSockex.start_link(url, __MODULE__, :no_state)
-      subscribe(pid)
-      {:ok, pid}
+      WebSockex.start_link(url, __MODULE__, :no_state)
     else
       :ignore
     end
@@ -19,11 +17,9 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
 
     message =
       %{
-        "action" => "authenticate",
-        "data" => %{
-          key_id: config[:api_key],
-          secret_key: config[:api_secret]
-        }
+        "action" => "auth",
+        "key" => config[:api_key],
+        "secret" => config[:api_secret]
       }
       |> Jason.encode!()
 
@@ -50,16 +46,26 @@ defmodule Trader.Alpaca.AlpacaDataCollector do
     end
   end
 
-  def receive_message(%{
-        "data" => %{"action" => "authenticate", "status" => "authorized"},
-        "stream" => "authorization"
-      }) do
+  def receive_message([%{"T" => "success", "msg" => "connected"}]) do
+    config = Application.get_env(:trader, Trader.Alpaca.AlpacaApi)
+
     message =
       %{
-        "action" => "listen",
-        "data" => %{
-          "streams" => ["AM.*"]
-        }
+        "action" => "auth",
+        "key" => config[:api_key],
+        "secret" => config[:api_secret]
+      }
+      |> Jason.encode!()
+
+    Logger.info(message)
+    {:text, message}
+  end
+
+  def receive_message([%{"T" => "success", "msg" => "authenticated"}]) do
+    message =
+      %{
+        "action" => "subscribe",
+        "bars" => "*"
       }
       |> Jason.encode!()
 
