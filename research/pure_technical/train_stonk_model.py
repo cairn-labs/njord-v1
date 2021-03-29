@@ -7,7 +7,7 @@ from analyst.word_dictionary import WordDictionary
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, normalize
 from tensorflow.keras import Input
 from tensorflow.keras import layers
 from tensorflow.keras.models import Model
@@ -33,18 +33,18 @@ def read_frame_config():
 def stream_data(dataset: DataSet):
     for X, y in dataset.labeled_data:
         stonk = X[0]
-
         last_stonk_price = stonk[-1][0]
         if last_stonk_price == 0:
             continue
         diff = (y - last_stonk_price) / last_stonk_price
-        if diff > 0.003:
+        if diff > 0.001:
             new_y = 1
-        elif diff > -0.003:
+        elif diff > -0.001:
             new_y = 0
         else:
             new_y = -1
 
+        stonk[:, [0]] = normalize(stonk[:, 0, None], norm='max', axis=0)
         yield [{'stonk': stonk}, new_y]
 
 
@@ -55,13 +55,22 @@ if __name__ == '__main__':
     frame_config = read_frame_config()
     dataset = DataSet(data_filename, frame_config)
 
-    stonk_input = Input(shape=(8, 2), dtype=tf.float32, name='stonk')
-    lstm1 = layers.Bidirectional(layers.LSTM(256, return_sequences=True, input_shape=(8, 2), dropout=0.2))(
-        stonk_input)
-    lstm2 = layers.Bidirectional(layers.LSTM(128, input_shape=(8, 2), dropout=0.2))(lstm1)
-    dense_prices = layers.Dense(32, activation='sigmoid')(lstm2)
-    intermediate = layers.Dense(16, activation='sigmoid')(dense_prices)
-    direction_pred = layers.Dense(3, name="direction_class", activation='softmax')(intermediate)
+    stonk_input = Input(shape=(60, 2), dtype=tf.float32, name='stonk')
+    lstm1 = layers.LSTM(128, return_sequences=True, input_shape=(60, 2), dropout=0.2)(stonk_input)
+    lstm2 = layers.LSTM(128, return_sequences=True, input_shape=(60, 2), dropout=0.2)(lstm1)
+    lstm3 = layers.LSTM(128, return_sequences=True, input_shape=(60, 2), dropout=0.2)(lstm2)
+    lstm4 = layers.LSTM(128, input_shape=(60, 2), dropout=0.2)(lstm3)
+
+    conv1 = layers.Conv1D(filters=128, kernel_size=3, input_shape=(2,), activation='relu')(stonk_input)
+    conv2 = layers.Conv1D(filters=256, kernel_size=3, activation='relu')(conv1)
+    conv3 = layers.Conv1D(filters=256, kernel_size=3, activation='relu')(conv2)
+    dropout = layers.Dropout(0.5)(conv3)
+    pooling = layers.MaxPooling1D(pool_size=2)(dropout)
+    flattened = layers.Flatten()(pooling)
+    # dense_prices = layers.Dense(64, activation='sigmoid')(lstm)
+    # intermediate = layers.Dense(32, activation='sigmoid')(dense_prices)
+    concatenated = layers.concatenate([flattened, lstm4])
+    direction_pred = layers.Dense(3, name="direction_class", activation='softmax')(concatenated)
     model = Model(
         inputs=[stonk_input],
         outputs=[direction_pred]
@@ -81,8 +90,8 @@ if __name__ == '__main__':
     model.fit(
         X_train,
         y_train,
-        epochs=250,
-        batch_size=1,
+        epochs=5000,
+        batch_size=8,
         validation_data = (X_test, y_test)
     )
 

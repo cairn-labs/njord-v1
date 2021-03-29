@@ -1,25 +1,25 @@
 # proto-file: frame_config.proto
 # proto-message: FrameConfig
 
-frame_width_ms: 960000 # 16 minutes
+frame_width_ms: 3600000 # 1 hour
 num_frames_requested: 1500
-sample_start_date: "2021-03-08"
+sample_start_date: "2021-02-01"
 sample_end_date: "2021-03-20"
 feature_configs {
   data_point_type: STONK_AGGREGATE
   bucketing_strategy: EARLIEST
-  bucket_width_ms: 120000
+  bucket_width_ms: 60000
   vectorization_strategy: PRICE_AND_VOLUME
   stonk_aggregate_config {
-    ticker: "GME"
+    ticker: "AMC"
     width_minutes: 1
   }
 }
 label_config {
-  prediction_delay_ms: 120000
+  prediction_delay_ms: 110000
   label_type: STONK_PRICE
   stonk_price_config {
-    ticker: "GME"
+    ticker: "AMC"
     width_minutes: 1
   }
 }
