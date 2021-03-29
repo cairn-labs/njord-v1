@@ -1,26 +1,26 @@
 # proto-file: trading_strategy.proto
 # proto-message: TradingStrategy
 
-name: "gme_tensorflow_momentum_strategy"
+name: "amc_macd_strategy"
 capital_allocation: 0.049
-cadence_ms: 180000  # 3 minutes
+cadence_ms: 60000 # 1 minute
 schedule: MARKET_HOURS
 prediction_model_config {
-  name: "tensorflow_stonk_prediction"
+  name: "macd_technical_model"
   frame_config {
-    frame_width_ms: 960000
+    frame_width_ms: 1800000 # 30 minutes
     feature_configs {
       data_point_type: STONK_AGGREGATE
       bucketing_strategy: EARLIEST
-      bucket_width_ms: 120000
-      vectorization_strategy: PRICE_AND_VOLUME
+      bucket_width_ms: 60000
+      vectorization_strategy: STOCK_DATA_FRAME
       stonk_aggregate_config {
-        ticker: "GME"
+        ticker: "AMC"
         width_minutes: 1
       }
     }
   }
   label_config {
-    prediction_delay_ms: 120000
+    prediction_delay_ms: 90000
   }
 }
