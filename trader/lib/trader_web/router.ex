@@ -10,6 +10,7 @@ defmodule TraderWeb.Router do
 
     get("/", IndexController, :index)
     get("/status", StatusController, :get_status)
+    get("/status/:strategy_name", StatusController, :get_strategy_status)
   end
 
   scope "/api", TraderWeb do

@@ -23,4 +23,8 @@ defmodule Trader.TimeUtil do
     {:ok, datetime, 0} = DateTime.from_iso8601("#{date_string}T23:59:59Z")
     datetime
   end
+
+  def est_date_to_datetime(date, time) do
+    DateTime.new!(date, time, "America/New_York") |> DateTime.shift_zone!("Etc/UTC")
+  end
 end
