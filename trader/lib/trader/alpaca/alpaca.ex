@@ -328,7 +328,11 @@ defmodule Trader.Alpaca.Alpaca do
       placed_orders
       |> Enum.split_with(fn %Order{id: id} -> id in filled_ids end)
 
-    now_filled = mark_orders_as(now_filled, :FILLED)
+    now_filled =
+      now_filled
+      |> mark_orders_as(:FILLED)
+      |> set_orders_price(exchange_filled_prices)
+
     log_filled_orders(now_filled)
 
     pid = self()
@@ -621,6 +625,13 @@ defmodule Trader.Alpaca.Alpaca do
   def mark_orders_as(orders, status) do
     orders
     |> Enum.map(fn order -> %Order{order | status: status} end)
+  end
+
+  def set_orders_price(orders, exchange_filled_prices) do
+    orders
+    |> Enum.map(fn order ->
+      %Order{order | price: Map.get(exchange_filled_prices, order.id, "")}
+    end)
   end
 
   defp log_filled_orders(orders) do
