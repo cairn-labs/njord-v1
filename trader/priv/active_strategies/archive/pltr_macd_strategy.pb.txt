@@ -2,7 +2,7 @@
 # proto-message: TradingStrategy
 
 name: "pltr_macd_strategy"
-capital_allocation: 0.049
+capital_allocation: 0.039
 cadence_ms: 60000 # 1 minute
 schedule: MARKET_HOURS
 prediction_model_config {

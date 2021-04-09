@@ -2,7 +2,7 @@
 # proto-message: TradingStrategy
 
 name: "wsb_momentum_strategy"
-capital_allocation: 0.049
+capital_allocation: 0.2
 cadence_ms: 720000  # 0.2 hours
 schedule: MARKET_HOURS
 trailing_stop_percent: 0.15
