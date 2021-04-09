@@ -15,7 +15,7 @@ import numpy as np
 MINIMUM_TOTAL_SCORE = 100
 MINIMUM_RSQUARED = 0.5
 MAXIMUM_PERCENT_ZEROS = 0.3
-
+STONK_BLACKLIST = {'GME', 'GOOG'}  # cuz fuck GME and I'm not allowed to trade GOOG half the year
 
 class SubredditTickerMentionMomentumModel(PricePredictionModel):
     """Literally just buys or sells depending on if a stonk is being talked about more or less.
@@ -67,6 +67,8 @@ class SubredditTickerMentionMomentumModel(PricePredictionModel):
 
         result = Prediction()
         for ticker, slope in moves:
+            if ticker.upper() in STONK_BLACKLIST:
+                continue
             label = result.labels.add()
             label.event_timestamp = target_timestamp
             label.value_decimal = "-0.1" if slope < 0 else "0.1"
