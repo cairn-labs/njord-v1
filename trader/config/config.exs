@@ -17,7 +17,6 @@ config :trader, TraderWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "kmdQgXsaPJC9nwRpICF5XUk1umB9vIOUJzhp49XgdJe44vM2t5Nr0tjdZL32x0/S",
   render_errors: [view: TraderWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Trader.PubSub, adapter: Phoenix.PubSub.PG2],
   live_view: [signing_salt: "6rBkMycF"]
 
 # Configures Elixir's Logger
