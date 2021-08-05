@@ -4,7 +4,7 @@ defmodule Trader.Alpaca.MockAlpaca do
   alias Trader.Db
   alias Trader.PriceUtil
 
-  @aggregate_width 1
+  @aggregate_width 20
   @genserver_timeout 30_000
 
   def start_link([]) do

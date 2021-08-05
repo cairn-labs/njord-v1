@@ -5,6 +5,12 @@ import "sampling_strategy.proto";
 
 message FrameConfig {
     uint64 frame_width_ms = 1;
+
+    // If set, start each frame this number of milliseconds after midnight ET.
+    // For example, to start at 8:30am ET, set frame_daily_offset_ms to 30600000.
+    // This allows sampling of a specific window during the trading day.
+    uint64 frame_daily_offset_ms = 9;
+
     repeated FeatureConfig feature_configs = 3;
     LabelConfig label_config = 4;
     uint32 num_frames_requested = 5;

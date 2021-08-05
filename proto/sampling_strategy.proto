@@ -4,6 +4,7 @@ enum SamplingStrategyType {
   UNKNOWN_SAMPLING_STRATEGY_TYPE = 0;
   RANDOM_WINDOW = 1;
   STRATIFIED_RANDOM_WINDOW = 2;
+  ALL_WINDOWS = 3;
 }
 
 message StratifiedRandomWindowStrategyParams {
