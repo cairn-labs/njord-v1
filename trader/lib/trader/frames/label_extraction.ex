@@ -40,6 +40,13 @@ defmodule Trader.Frames.LabelExtraction do
     end
   end
 
+  def get_label(
+        _label_timestamp,
+        %LabelConfig{label_type: :NO_LABEL}
+      ) do
+    nil
+  end
+
   def label_to_direction(:FX_RATE, "1"), do: :up
   def label_to_direction(:FX_RATE, "0"), do: :flat
   def label_to_direction(:FX_RATE, "-1"), do: :down

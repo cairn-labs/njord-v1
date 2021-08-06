@@ -34,7 +34,7 @@ defmodule Trader.Selectors do
     "#{ticker}-#{width}"
   end
 
-  def from_data_point(d) do
+  def from_data_point(_d) do
     nil
   end
 
@@ -57,7 +57,13 @@ defmodule Trader.Selectors do
           width_minutes: width_minutes
         }
       }) do
-    "#{ticker}-#{width_minutes}"
+    case String.split(ticker, ",") do
+      [t] ->
+        "#{t}-#{width_minutes}"
+
+      tickers ->
+        Enum.map(tickers, fn t -> "#{t}-#{width_minutes}" end)
+    end
   end
 
   def from_feature_config(%FeatureConfig{

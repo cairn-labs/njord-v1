@@ -1,10 +1,11 @@
 defmodule Trader.Frames.FrameGeneration do
   alias Trader.Db
   alias Trader.Frames.LabelExtraction
-  require Logger  
+  alias Trader.TimeUtil
+  require Logger
 
-  @inter_frame_delay_ms 1000
-  
+  @inter_frame_delay_ms 100
+
   @doc """
   Gets a set of frames including labels, as specified by a provided FrameConfig
   """
@@ -12,7 +13,8 @@ defmodule Trader.Frames.FrameGeneration do
         %FrameConfig{
           num_frames_requested: num_frames
         } = frame_config
-      ) do
+      )
+      when num_frames > 0 do
     case available_windows(frame_config) do
       [] ->
         {:error, :no_data_available}
@@ -24,6 +26,17 @@ defmodule Trader.Frames.FrameGeneration do
       windows ->
         extract_frames(Enum.take_random(windows, num_frames), frame_config)
     end
+  end
+
+  def generate_frames(
+        %FrameConfig{
+          sampling_strategy: %SamplingStrategy{
+            sampling_strategy_type: :ALL_WINDOWS
+          }
+        } = frame_config
+      ) do
+    available_windows(frame_config)
+    |> extract_frames(frame_config)
   end
 
   @doc """
@@ -74,6 +87,21 @@ defmodule Trader.Frames.FrameGeneration do
       MapSet.size(Enum.into(types, MapSet.new())) == MapSet.size(required_types)
     end)
     |> Enum.map(fn {ts, _} -> ts end)
+  end
+
+  defp available_windows(%FrameConfig{
+         frame_width_ms: frame_width_ms,
+         frame_daily_offset_ms: frame_daily_offset_ms,
+         sample_start_date: start_date,
+         sample_end_date: end_date,
+         sampling_strategy: %{sampling_strategy_type: :ALL_WINDOWS}
+       }) do
+    daily_start_time =
+      Time.add(~T[00:00:00], frame_daily_offset_ms + frame_width_ms, :millisecond)
+
+    TimeUtil.date_range(start_date, end_date)
+    |> Enum.map(&Date.from_iso8601!/1)
+    |> Enum.map(fn date -> TimeUtil.est_date_to_datetime(date, daily_start_time) end)
   end
 
   defp available_windows(%FrameConfig{
@@ -196,6 +224,7 @@ defmodule Trader.Frames.FrameGeneration do
           [frame]
         rescue
           e in FunctionClauseError ->
+            Logger.warn(inspect(e))
             Logger.warn("NOOOOOO #{inspect(config)}")
             []
         end
@@ -223,7 +252,7 @@ defmodule Trader.Frames.FrameGeneration do
       |> LabelExtraction.get_label(label_config)
 
     :timer.sleep(@inter_frame_delay_ms)
-    
+
     DataFrame.new(components: components, label: label)
   end
 
@@ -231,19 +260,35 @@ defmodule Trader.Frames.FrameGeneration do
          feature_configs: feature_configs,
          frame_width_ms: frame_width_ms
        }) do
-    for feature_config <- feature_configs do
-      selector = Trader.Selectors.from_feature_config(feature_config)
+    feature_configs
+    |> Enum.flat_map(fn feature_config ->
+      case Trader.Selectors.from_feature_config(feature_config) do
+        selectors when is_list(selectors) ->
+          for selector <- selectors do
+            data_points =
+              Db.DataPoints.get_frame_component(
+                feature_config,
+                window_start,
+                frame_width_ms,
+                selector
+              )
+              |> Enum.map(&DataPoint.decode/1)
 
-      data_points =
-        Db.DataPoints.get_frame_component(
-          feature_config,
-          window_start,
-          frame_width_ms,
-          selector
-        )
-        |> Enum.map(&DataPoint.decode/1)
+            FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)
+          end
 
-      FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)
-    end
+        selector when is_binary(selector) ->
+          data_points =
+            Db.DataPoints.get_frame_component(
+              feature_config,
+              window_start,
+              frame_width_ms,
+              selector
+            )
+            |> Enum.map(&DataPoint.decode/1)
+
+          [FrameComponent.new(data_point_type: feature_config.data_point_type, data: data_points)]
+      end
+    end)
   end
 end

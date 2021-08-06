@@ -1,0 +1,25 @@
+# proto-file: frame_config.proto
+# proto-message: FrameConfig
+
+# From 8:30am until 4pm daily
+frame_width_ms: 27000000
+frame_daily_offset_ms: 30600000
+sample_start_date: "2021-07-01"
+sample_end_date: "2021-08-05"
+
+feature_configs {
+  data_point_type: STONK_AGGREGATE
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 1200000  # 20 minutes
+  vectorization_strategy: PRICE_AND_VOLUME
+  stonk_aggregate_config {
+    ticker: "AMC,AMD,GME"
+    width_minutes: 20
+  }
+}
+label_config {
+  label_type: NO_LABEL
+}
+sampling_strategy {
+  sampling_strategy_type: ALL_WINDOWS
+}
