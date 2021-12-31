@@ -42,6 +42,14 @@ config :trader, Trader.Polygon.PolygonApi,
   rest_api_url: "https://api.polygon.io/",
   websocket_api_url: "wss://socket.polygon.io/stocks"
 
+config :trader, Trader.Tradier.TradierApi,
+  rest_api_token: System.get_env("TRADIER_PAPER_ACCESS_TOKEN"),
+  rest_api_url: "https://sandbox.tradier.com/",
+  live_rest_api_token: System.get_env("TRADIER_LIVE_ACCESS_TOKEN"),
+  live_rest_api_url: "https://api.tradier.com/",
+  streaming_api_token: System.get_env("TRADIER_LIVE_ACCESS_TOKEN"),
+  streaming_api_url: "wss://ws.tradier.com/v1/markets/events"
+
 config :trader, Trader.Polygon.HistoricalStockAggregateCollector,
   enable: true,
   milliseconds_per_tick: 60_000

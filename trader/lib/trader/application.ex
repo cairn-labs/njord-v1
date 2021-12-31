@@ -19,7 +19,8 @@ defmodule Trader.Application do
       Trader.Alpaca.AlpacaDataCollector,
       Trader.Runners.LiveRunner,
       Trader.Alpaca.Alpaca,
-      Trader.Polygon.RealtimeStockAggregateCollector
+      Trader.Polygon.RealtimeStockAggregateCollector,
+      Trader.Tradier.RealtimeOptionQuoteCollector
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

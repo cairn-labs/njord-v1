@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message OptionQuote {
+    string symbol = 1;
+    float bid = 2;
+    float bidsz = 3;
+    string bidexch = 4;
+    string biddate = 5;
+    float ask = 6;
+    float asksz = 7;
+    string askexch = 8;
+    string askdate = 9;
+}

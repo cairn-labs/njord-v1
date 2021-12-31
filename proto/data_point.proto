@@ -3,6 +3,7 @@ import "l2_order_book.proto";
 import "news_api_item.proto";
 import "subreddit_top_listing.proto";
 import "stonk_aggregate.proto";
+import "option_quote.proto";
 
 
 enum DataPointType {
@@ -11,6 +12,7 @@ enum DataPointType {
     NEWS_API_ITEM = 2;
     SUBREDDIT_TOP_LISTING = 3;
     STONK_AGGREGATE = 4;
+    OPTION_QUOTE = 5;
 }
 
 message DataPoint {
@@ -21,4 +23,5 @@ message DataPoint {
     NewsApiItem news_api_item = 4;
     SubredditTopListing subreddit_top_listing = 5;
     StonkAggregate stonk_aggregate = 6;
+    OptionQuote option_quote = 7;
 }

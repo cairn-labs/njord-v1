@@ -34,6 +34,13 @@ defmodule Trader.Selectors do
     "#{ticker}-#{width}"
   end
 
+  def from_data_point(%DataPoint{
+        data_point_type: :OPTION_QUOTE,
+        option_quote: %OptionQuote{symbol: symbol}
+      }) do
+    symbol
+  end
+
   def from_data_point(d) do
     nil
   end
