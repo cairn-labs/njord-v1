@@ -50,6 +50,10 @@ config :trader, Trader.Tradier.TradierApi,
   streaming_api_token: System.get_env("TRADIER_LIVE_ACCESS_TOKEN"),
   streaming_api_url: "wss://ws.tradier.com/v1/markets/events"
 
+config :trader, Trader.Tradier.RealtimeOptionQuoteCollector,
+  tickers: ["AMD"], # , "XLNX", "HLTH", "SPY", "TSLA"]
+  max_otm_percent: 0.3
+
 config :trader, Trader.Polygon.HistoricalStockAggregateCollector,
   enable: true,
   milliseconds_per_tick: 60_000
