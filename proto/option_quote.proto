@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+message OptionQuoteConfig {
+    repeated string underlying = 1;
+}
+
 message OptionQuote {
     string symbol = 1;
     float bid = 2;

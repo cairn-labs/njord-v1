@@ -7,4 +7,5 @@ enum VectorizationStrategy {
   PRICE_AND_VOLUME = 3;
   WEIGHTED_BAG_OF_WORDS = 4;
   STOCK_DATA_FRAME = 5;
+  NBBO = 6;
 }

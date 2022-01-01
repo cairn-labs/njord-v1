@@ -51,7 +51,7 @@ config :trader, Trader.Tradier.TradierApi,
   streaming_api_url: "wss://ws.tradier.com/v1/markets/events"
 
 config :trader, Trader.Tradier.RealtimeOptionQuoteCollector,
-  tickers: ["AMD"], # , "XLNX", "HLTH", "SPY", "TSLA"]
+  tickers: ["AMD"],
   max_otm_percent: 0.3
 
 config :trader, Trader.Polygon.HistoricalStockAggregateCollector,

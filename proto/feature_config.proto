@@ -6,6 +6,7 @@ import "l2_order_book.proto";
 import "vectorization_strategy.proto";
 import "stonk_aggregate.proto";
 import "subreddit_top_listing.proto";
+import "option_quote.proto";
 
 
 message FeatureConfig {
@@ -18,4 +19,5 @@ message FeatureConfig {
   L2OrderBookConfig l2_order_book_config = 5;
   StonkAggregateConfig stonk_aggregate_config = 7;
   SubredditTopListingConfig subreddit_top_listing_config = 8;
+  OptionQuoteConfig option_quote_config = 9;
 }
