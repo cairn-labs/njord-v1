@@ -36,6 +36,8 @@ config :trader, Trader.Polygon.HistoricalStockAggregateCollector, enable: false
 
 config :trader, Trader.Polygon.RealtimeStockAggregateCollector, enable: false
 
+config :trader, Trader.Tradier.RealtimeOptionQuoteCollector, enable: false
+
 config :trader, Trader.Newsapi.NewsapiDataCollector, enable: false
 
 config :trader, Trader.Reddit.RedditDataCollector, enable: false

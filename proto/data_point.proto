@@ -13,6 +13,7 @@ enum DataPointType {
     SUBREDDIT_TOP_LISTING = 3;
     STONK_AGGREGATE = 4;
     OPTION_QUOTE = 5;
+    OPTION_QUOTE_CHAIN = 6;
 }
 
 message DataPoint {
@@ -24,4 +25,5 @@ message DataPoint {
     SubredditTopListing subreddit_top_listing = 5;
     StonkAggregate stonk_aggregate = 6;
     OptionQuote option_quote = 7;
+    OptionQuoteChain option_quote_chain = 8;
 }

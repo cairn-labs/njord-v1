@@ -76,6 +76,15 @@ defmodule Trader.Selectors do
     name
   end
 
+  def from_feature_config(%FeatureConfig{
+        data_point_type: :OPTION_QUOTE_CHAIN,
+        option_quote_chain_config: %OptionQuoteChainConfig{
+          underlying: ticker
+        }
+      }) do
+    ticker
+  end
+
   def from_feature_config(_), do: nil
 
   def from_label_config(%LabelConfig{

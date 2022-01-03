@@ -2,7 +2,8 @@ from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.frame_config_pb2 import FrameConfig
 from analyst.proto.feature_config_pb2 import FeatureConfig
 from analyst.proto.frame_component_pb2 import FrameComponent
-from analyst.proto.data_point_pb2 import L2_ORDER_BOOK, STONK_AGGREGATE, SUBREDDIT_TOP_LISTING, DataPointType
+from analyst.proto.data_point_pb2 import L2_ORDER_BOOK, STONK_AGGREGATE, SUBREDDIT_TOP_LISTING, OPTION_QUOTE, \
+    DataPointType, OPTION_QUOTE_CHAIN
 from analyst.proto.label_config_pb2 import FX_RATE, STONK_PRICE
 from analyst.vectorization.l2_order_book_vectorization import (
     vectorize_l2_order_book_frame_component, l2_order_book_feature_shape)
@@ -12,6 +13,9 @@ from analyst.vectorization.stonk_aggregate_vectorization import (
 from analyst.vectorization.subreddit_top_listing_vectorization import (
     subreddit_top_listing_feature_shape, vectorize_subreddit_top_listing_frame_component)
 from analyst.vectorization.stonk_price_label_vectorization import vectorize_stonk_price_label
+from analyst.vectorization.option_quote_vectorization import (
+    option_quote_feature_shape, vectorize_option_quote_frame_component
+)
 import numpy as np
 
 
@@ -45,6 +49,11 @@ def vectorize_component(component: FrameComponent, feature_config: FeatureConfig
     elif component.data_point_type == SUBREDDIT_TOP_LISTING:
         return (subreddit_top_listing_feature_shape(feature_config.vectorization_strategy),
                 vectorize_subreddit_top_listing_frame_component(component, feature_config.vectorization_strategy))
+    elif component.data_point_type == OPTION_QUOTE:
+        return (option_quote_feature_shape(feature_config.vectorization_strategy),
+                vectorize_option_quote_frame_component(component, feature_config.vectorization_strategy))
+    elif component.data_point_type == OPTION_QUOTE_CHAIN:
+        return ((1,), np.asarray([1]))
     else:
         raise NotImplementedError(f"Frame component type {DataPointType.Name(component.data_point_type)} not supported.")
 

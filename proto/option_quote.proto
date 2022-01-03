@@ -4,6 +4,10 @@ message OptionQuoteConfig {
     repeated string underlying = 1;
 }
 
+message OptionQuoteChainConfig {
+    string underlying = 1;
+}
+
 message OptionQuote {
     string symbol = 1;
     float bid = 2;
@@ -14,4 +18,9 @@ message OptionQuote {
     float asksz = 7;
     string askexch = 8;
     string askdate = 9;
+}
+
+message OptionQuoteChain {
+    string underlying = 1;
+    repeated OptionQuote quote = 2;
 }

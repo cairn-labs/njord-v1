@@ -20,4 +20,5 @@ message FeatureConfig {
   StonkAggregateConfig stonk_aggregate_config = 7;
   SubredditTopListingConfig subreddit_top_listing_config = 8;
   OptionQuoteConfig option_quote_config = 9;
+  OptionQuoteChainConfig option_quote_chain_config = 10;
 }

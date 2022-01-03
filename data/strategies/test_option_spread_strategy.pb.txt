@@ -1,39 +1,25 @@
 # proto-file: trading_strategy.proto
 # proto-message: TradingStrategy
 
-name: "wsb_vega_crush_test"
+name: "option_spread_scalping_test"
 capital_allocation: 1.0
-cadence_ms: 300000  # 5 minutes
+cadence_ms: 60000  # 60 seconds
 schedule: MARKET_HOURS
 prediction_model_config {
-  name: "predict_vega_crush_from_sentiment"
+  name: "find_mispriced_options_in_chain"
   frame_config {
-    frame_width_ms: 300000
+    frame_width_ms: 60000
     feature_configs {
-      data_point_type: OPTION_QUOTE
+      data_point_type: OPTION_QUOTE_CHAIN
       bucketing_strategy: EARLIEST
-      bucket_width_ms: 20000
+      bucket_width_ms: 30000
       vectorization_strategy: NBBO
-      option_quote_config {
+      option_quote_chain_config {
         underlying: "AMD"
-        underlying: "TSLA"
-        underlying: "XLNX"
-        underlying: "PLTR"
-        underlying: "NIO"
-        underlying: "CRSR"
-      }
-    }
-    feature_configs {
-      data_point_type: SUBREDDIT_TOP_LISTING
-      bucketing_strategy: EARLIEST
-      bucket_width_ms: 1800000  # 30 minutes
-      vectorization_strategy: WEIGHTED_BAG_OF_WORDS
-      subreddit_top_listing_config {
-        subreddit_name: "wallstreetbets"
       }
     }
   }
   label_config {
-    prediction_delay_ms: 120000
+    prediction_delay_ms: 0
   }
 }

@@ -116,6 +116,47 @@ defmodule Trader.Db.DataPoints do
 
   def get_frame_component(
         %FeatureConfig{
+          data_point_type: :OPTION_QUOTE_CHAIN,
+          bucketing_strategy: bucketing_strategy,
+          bucket_width_ms: bucket_width_ms
+        },
+        start_timestamp,
+        frame_width_ms,
+        selector
+      ) do
+    query = """
+    SELECT DISTINCT selector
+    FROM data
+    WHERE time >= $1
+    AND TIME < $1 + interval '#{frame_width_ms}  milliseconds'
+    AND data_type = 5
+    """
+
+    {:ok, %{rows: rows}} = SQL.query(Repo, query, [start_timestamp])
+
+    quotes =
+      for [symbol] <- rows do
+        # investigate parallelizing this
+        get_frame_component(
+          %FeatureConfig{
+            data_point_type: :OPTION_QUOTE,
+            bucketing_strategy: bucketing_strategy,
+            bucket_width_ms: bucket_width_ms
+          },
+          start_timestamp,
+          frame_width_ms,
+          symbol
+        )
+      end
+    Logger.info("ROWS #{inspect(rows)}")
+    Logger.info(inspect(Enum.map(quotes, &length/1)))
+    # Just need to figure out how to combine these properly into
+    # an Option Quote Chain object. Probably want to unzip  -- see terminal
+    []
+  end
+
+  def get_frame_component(
+        %FeatureConfig{
           data_point_type: data_point_type,
           bucketing_strategy: bucketing_strategy,
           bucket_width_ms: bucket_width_ms
