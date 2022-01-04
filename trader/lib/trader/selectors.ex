@@ -41,6 +41,13 @@ defmodule Trader.Selectors do
     symbol
   end
 
+  def from_data_point(%DataPoint{
+        data_point_type: :OPTION_TRADE,
+        option_trade: %OptionTrade{symbol: symbol}
+      }) do
+    symbol
+  end
+
   def from_data_point(d) do
     nil
   end

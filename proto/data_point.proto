@@ -14,6 +14,7 @@ enum DataPointType {
     STONK_AGGREGATE = 4;
     OPTION_QUOTE = 5;
     OPTION_QUOTE_CHAIN = 6;
+    OPTION_TRADE = 7;
 }
 
 message DataPoint {
@@ -26,4 +27,5 @@ message DataPoint {
     StonkAggregate stonk_aggregate = 6;
     OptionQuote option_quote = 7;
     OptionQuoteChain option_quote_chain = 8;
+    OptionTrade option_trade = 9;
 }

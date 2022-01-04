@@ -3,6 +3,7 @@ defmodule Trader.Tradier.RealtimeOptionQuoteCollector do
   require Logger
   alias Trader.Db
   alias Trader.Tradier.TradierApi
+  alias Trader.PriceUtil
 
   def start_link([]) do
     if Application.get_env(:trader, __MODULE__)[:enable] do
@@ -82,6 +83,42 @@ defmodule Trader.Tradier.RealtimeOptionQuoteCollector do
             biddate: biddate,
             bidexch: bidexch,
             bidsz: bidsz,
+            symbol: symbol
+          )
+      )
+
+    # By default this special process silently ignores errors, don't do that.
+    try do
+      Db.DataPoints.insert_datapoint(datapoint)
+    rescue
+      e ->
+        Logger.error(inspect(e))
+        raise e
+    end
+
+    :ok
+  end
+
+  def receive_message(%{
+        "date" => date,
+        "price" => price,
+        "size" => size,
+        "exch" => exch,
+        "symbol" => symbol,
+        "type" => "trade"
+      })
+      when price != "" do
+    ts = String.to_integer(date) * 1000
+
+    datapoint =
+      DataPoint.new(
+        event_timestamp: ts,
+        data_point_type: :OPTION_TRADE,
+        option_trade:
+          OptionTrade.new(
+            price: PriceUtil.as_float(price),
+            size: PriceUtil.as_float(size),
+            exchange: exch,
             symbol: symbol
           )
       )
