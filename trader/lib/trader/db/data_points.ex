@@ -130,29 +130,39 @@ defmodule Trader.Db.DataPoints do
     WHERE time >= $1
     AND TIME < $1 + interval '#{frame_width_ms}  milliseconds'
     AND data_type = 5
+    AND selector LIKE $2
     """
 
-    {:ok, %{rows: rows}} = SQL.query(Repo, query, [start_timestamp])
+    {:ok, %{rows: rows}} = SQL.query(Repo, query, [start_timestamp, selector <> "%"])
 
-    quotes =
-      for [symbol] <- rows do
-        # investigate parallelizing this
-        get_frame_component(
-          %FeatureConfig{
-            data_point_type: :OPTION_QUOTE,
-            bucketing_strategy: bucketing_strategy,
-            bucket_width_ms: bucket_width_ms
-          },
-          start_timestamp,
-          frame_width_ms,
-          symbol
-        )
-      end
-    Logger.info("ROWS #{inspect(rows)}")
-    Logger.info(inspect(Enum.map(quotes, &length/1)))
-    # Just need to figure out how to combine these properly into
-    # an Option Quote Chain object. Probably want to unzip  -- see terminal
-    []
+    rows
+    |> ParallelStream.map(fn [symbol] ->
+      get_frame_component(
+        %FeatureConfig{
+          data_point_type: :OPTION_QUOTE,
+          bucketing_strategy: bucketing_strategy,
+          bucket_width_ms: bucket_width_ms
+        },
+        start_timestamp,
+        frame_width_ms,
+        symbol
+      )
+    end)
+    |> Enum.into([])
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.map(fn dps -> Enum.map(dps, fn dp -> {dp.option_quote, dp.event_timestamp} end) end)
+    |> Enum.map(fn qs ->
+      {OptionQuoteChain.new(quote: Enum.map(qs, fn {q, _} -> q end), underlying: selector),
+       elem(hd(qs), 1)}
+    end)
+    |> Enum.map(fn {oqc, ts} ->
+      DataPoint.new(
+        data_point_type: :OPTION_QUOTE_CHAIN,
+        event_timestamp: ts,
+        option_quote_chain: oqc
+      )
+    end)
   end
 
   def get_frame_component(
@@ -202,6 +212,7 @@ defmodule Trader.Db.DataPoints do
       [_ts, value] when value != nil -> [value]
       _ -> []
     end)
+    |> Enum.map(&DataPoint.decode/1)
   end
 
   def get_data_at_time(timestamp, data_point_type, selector, before_or_after) do

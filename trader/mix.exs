@@ -33,6 +33,7 @@ defmodule Trader.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:parallel_stream, "~> 1.1"},
       {:phoenix, "~> 1.5.9"},
       {:phoenix_pubsub, "~> 2.0"},
       {:phoenix_ecto, "~> 4.0"},

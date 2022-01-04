@@ -4,6 +4,7 @@ from analyst.vectorization.frame_vectorization import data_timestamps, vectorize
 from analyst.proto.data_point_pb2 import DataPointType
 from analyst.proto.data_frame_pb2 import DataFrame
 from analyst.proto.label_pb2 import Label
+from google.protobuf.text_format import MessageToString
 
 
 class FindMispricedOptionsInChainModel(PricePredictionModel):
@@ -22,6 +23,8 @@ class FindMispricedOptionsInChainModel(PricePredictionModel):
 
     def predict(self, data_frame: DataFrame) -> Label:
         vectorized, _ = vectorize_frame(data_frame, self.frame_config_)
+        # Double check to make sure that the timestamp logic is actually working. May be better to just compute it
+        # based on the window/frame begin time.
         #timestamps = data_timestamps(data_frame, DataPointType.OPTION_QUOTE_CHAIN)
         #target_timestamp = timestamps[-1] + self.prediction_delay_ms_
         print("Vectorized:")

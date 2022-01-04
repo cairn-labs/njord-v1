@@ -16,6 +16,9 @@ from analyst.vectorization.stonk_price_label_vectorization import vectorize_ston
 from analyst.vectorization.option_quote_vectorization import (
     option_quote_feature_shape, vectorize_option_quote_frame_component
 )
+from analyst.vectorization.option_quote_chain_vectorization import (
+    option_quote_chain_feature_shape, vectorize_option_quote_chain_frame_component
+)
 import numpy as np
 
 
@@ -53,7 +56,8 @@ def vectorize_component(component: FrameComponent, feature_config: FeatureConfig
         return (option_quote_feature_shape(feature_config.vectorization_strategy),
                 vectorize_option_quote_frame_component(component, feature_config.vectorization_strategy))
     elif component.data_point_type == OPTION_QUOTE_CHAIN:
-        return ((1,), np.asarray([1]))
+        return (option_quote_chain_feature_shape(feature_config.vectorization_strategy),
+                vectorize_option_quote_chain_frame_component(component, feature_config.vectorization_strategy))
     else:
         raise NotImplementedError(f"Frame component type {DataPointType.Name(component.data_point_type)} not supported.")
 
