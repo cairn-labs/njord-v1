@@ -65,7 +65,8 @@ defmodule Trader.Tradier.RealtimeOptionQuoteCollector do
         "bidsz" => bidsz,
         "symbol" => symbol,
         "type" => "quote"
-      }) do
+      })
+      when ask != "NaN" and bid != "NaN" do
     ask_ts = String.to_integer(askdate) * 1000
     bid_ts = String.to_integer(biddate) * 1000
 
