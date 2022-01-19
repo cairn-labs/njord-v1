@@ -21,4 +21,5 @@ message FeatureConfig {
   SubredditTopListingConfig subreddit_top_listing_config = 8;
   OptionQuoteConfig option_quote_config = 9;
   OptionQuoteChainConfig option_quote_chain_config = 10;
+  OptionChainTradesConfig option_chain_trades_config = 11;
 }

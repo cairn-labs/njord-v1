@@ -6,6 +6,7 @@ enum LabelType {
     UNKNOWN_LABEL_TYPE = 0;
     FX_RATE = 1;
     STONK_PRICE = 2;
+    NO_LABEL = 3;
 }
 
 enum LabelOptions {

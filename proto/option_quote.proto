@@ -8,6 +8,10 @@ message OptionQuoteChainConfig {
     string underlying = 1;
 }
 
+message OptionChainTradesConfig {
+    string underlying = 1;
+}
+
 message OptionQuote {
     string symbol = 1;
     float bid = 2;
@@ -30,4 +34,5 @@ message OptionTrade {
     float price = 2;
     float size = 3;
     string exchange = 4;
+    uint64 fill_timestamp = 5;
 }

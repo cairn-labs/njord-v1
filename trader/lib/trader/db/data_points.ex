@@ -115,6 +115,18 @@ defmodule Trader.Db.DataPoints do
   end
 
   def get_frame_component(
+    %FeatureConfig{
+      data_point_type: :OPTION_CHAIN_TRADES,
+      bucket_width_ms: bucket_width_ms
+    },
+    start_timestamp,
+    frame_width_ms,
+    selector
+  ) do
+
+  end
+
+  def get_frame_component(
         %FeatureConfig{
           data_point_type: :OPTION_QUOTE_CHAIN,
           bucketing_strategy: bucketing_strategy,

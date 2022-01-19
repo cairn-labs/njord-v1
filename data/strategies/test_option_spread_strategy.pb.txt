@@ -8,7 +8,7 @@ schedule: MARKET_HOURS
 prediction_model_config {
   name: "find_mispriced_options_in_chain"
   frame_config {
-    frame_width_ms: 60000
+    frame_width_ms: 90000
     feature_configs {
       data_point_type: OPTION_QUOTE_CHAIN
       bucketing_strategy: EARLIEST
@@ -18,6 +18,15 @@ prediction_model_config {
         underlying: "AMD"
       }
     }
+    feature_configs {
+      data_point_type: OPTION_CHAIN_TRADES
+      bucket_width_ms: 30000
+      vectorization_strategy: UNKNOWN_VECTORIZATION_STRATEGY
+      option_quote_chain_config {
+        underlying: "AMD"
+      }
+    }
+
   }
   label_config {
     prediction_delay_ms: 0

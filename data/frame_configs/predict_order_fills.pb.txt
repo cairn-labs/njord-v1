@@ -1,0 +1,26 @@
+# proto-file: frame_config.proto
+# proto-message: FrameConfig
+
+frame_width_ms: 300000 # 5 minutes
+num_frames_requested: 100
+sample_start_date: "2022-01-14"
+sample_end_date: "2022-01-15"
+feature_configs {
+  data_point_type: OPTION_QUOTE_CHAIN
+  bucketing_strategy: EARLIEST
+  bucket_width_ms: 30000
+  interpolate_strategy {
+    max_interpolation_time_diff_ms: 30000
+  }
+  vectorization_strategy: NBBO
+  option_quote_chain_config {
+    underlying: "HLTH"
+  }
+}
+label_config {
+  prediction_delay_ms: 5000
+  label_type: NO_LABEL
+}
+sampling_strategy {
+  sampling_strategy_type: RANDOM_WINDOW
+}

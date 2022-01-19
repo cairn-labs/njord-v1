@@ -15,6 +15,7 @@ enum DataPointType {
     OPTION_QUOTE = 5;
     OPTION_QUOTE_CHAIN = 6;
     OPTION_TRADE = 7;
+    OPTION_CHAIN_TRADES = 8;
 }
 
 message DataPoint {
@@ -28,4 +29,5 @@ message DataPoint {
     OptionQuote option_quote = 7;
     OptionQuoteChain option_quote_chain = 8;
     OptionTrade option_trade = 9;
+    repeated OptionTrade option_chain_trades = 10;
 }
