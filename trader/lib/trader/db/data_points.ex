@@ -115,15 +115,17 @@ defmodule Trader.Db.DataPoints do
   end
 
   def get_frame_component(
-    %FeatureConfig{
-      data_point_type: :OPTION_CHAIN_TRADES,
-      bucket_width_ms: bucket_width_ms
-    },
-    start_timestamp,
-    frame_width_ms,
-    selector
-  ) do
-
+        %FeatureConfig{
+          data_point_type: :OPTION_CHAIN_TRADES,
+          bucket_width_ms: bucket_width_ms
+        },
+        start_timestamp,
+        frame_width_ms,
+        selector
+      ) do
+    query = """
+    SELECT contents
+    """
   end
 
   def get_frame_component(

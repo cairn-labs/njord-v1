@@ -15,7 +15,7 @@ prediction_model_config {
       bucket_width_ms: 30000
       vectorization_strategy: NBBO
       option_quote_chain_config {
-        underlying: "AMD"
+        underlying: "HLTH"
       }
     }
     feature_configs {
@@ -23,7 +23,7 @@ prediction_model_config {
       bucket_width_ms: 30000
       vectorization_strategy: UNKNOWN_VECTORIZATION_STRATEGY
       option_quote_chain_config {
-        underlying: "AMD"
+        underlying: "HLTH"
       }
     }
 
